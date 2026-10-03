@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>減重教練</title>
+<style>
+:root{--bg:#f2f5f1;--ink:#1c2b26;--mut:#68776f;--card:#fff;--ac:#2f7d5b;--warn:#c8841a;--ln:#dde5df}
+@media(prefers-color-scheme:dark){:root{--bg:#121a17;--ink:#e6efe9;--mut:#93a39a;--card:#1a2420;--ac:#5cc496;--warn:#e3a84b;--ln:#2a3832}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,"Noto Sans TC",sans-serif;padding:env(safe-area-inset-top) 0 calc(env(safe-area-inset-bottom) + 12px)}
+main{max-width:560px;margin:auto;padding:16px}
+h1{font-size:22px;margin:4px 0 12px}h2{font-size:17px;margin:22px 0 8px}
+.card{background:var(--card);border:1px solid var(--ln);border-radius:12px;padding:14px;margin-bottom:10px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;text-align:center}
+.stats b{display:block;font-size:20px}.stats span,.mut{color:var(--mut);font-size:13px}
+button,.btn{font:inherit;border:0;border-radius:10px;padding:10px 14px;background:var(--ac);color:#fff;cursor:pointer;display:inline-block}
+button.alt{background:transparent;color:var(--ac);border:1px solid var(--ac)}
+input[type=checkbox]{width:auto;margin:0 8px 0 0}.tm{display:grid;grid-template-columns:1fr 1fr;gap:8px}h3{font-size:15px;margin:6px 0}
+summary{cursor:pointer;font-size:14px}
+.seg{display:flex;border:1px solid var(--ac);border-radius:10px;overflow:hidden}.seg button{flex:1;border-radius:0;background:transparent;color:var(--ac);padding:8px 4px}.seg button.on{background:var(--ac);color:#fff}
+.nav{justify-content:space-between;align-items:center;margin-bottom:6px}.nav button{padding:4px 16px}button:disabled{opacity:.35;cursor:default}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center;margin:6px 0}.cal span{font-size:12px}
+.cal button{aspect-ratio:1;padding:0;border-radius:8px;font-size:13px;color:var(--ink);background:var(--bg);border:1px solid var(--ln);position:relative}
+.cal .g{background:color-mix(in srgb,var(--ac) 38%,var(--card))}.cal .a{background:color-mix(in srgb,var(--warn) 45%,var(--card))}
+.cal .sel{outline:2px solid var(--ink);outline-offset:1px}.cal .dot::after{content:'';position:absolute;left:calc(50% - 2px);bottom:3px;width:4px;height:4px;border-radius:50%;background:var(--ink)}
+.li{display:grid;gap:8px;width:100%;text-align:left;background:var(--card);color:var(--ink);border:1px solid var(--ln);border-radius:10px;margin-bottom:6px;padding:10px;font-size:14px}
+img:not([src]){visibility:hidden}
+dialog{background:var(--card);color:var(--ink);border:1px solid var(--ln);border-radius:12px;max-width:90vw;max-height:80vh;overflow:auto}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--warn);outline-offset:2px}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+input,textarea,select{font:inherit;width:100%;padding:9px;border-radius:8px;border:1px solid var(--ln);background:var(--bg);color:var(--ink);margin:4px 0 10px}
+.meal{display:flex;gap:10px;align-items:center}.meal img{width:64px;height:64px;object-fit:cover;border-radius:8px}
+.rv{white-space:pre-wrap}#toast{position:fixed;left:16px;right:16px;bottom:20px;background:var(--ink);color:var(--bg);padding:10px 14px;border-radius:10px;display:none}
+</style></head><body><main>
+<h1>減重教練</h1>
+<div class="card"><div class="stats" id="stats"></div>
+<p class="mut" id="goal"></p></div>
+<div class="row"><button id="sync">同步 Health Connect</button>
+<label class="btn alt">拍照記錄飲食<input id="cam" type="file" accept="image/*" capture="environment" hidden></label></div>
+
+<h2>趨勢</h2><div class="card"><div class="seg" id="trs" style="margin-bottom:8px"><button data-n="30">30 天</button><button data-n="90">90 天</button><button data-n="365">1 年</button><button data-n="all">全部</button></div>
+<svg id="chart" viewBox="0 0 320 140" width="100%" role="img" aria-label="體重趨勢"></svg>
+<svg id="cal" viewBox="0 0 320 110" width="100%" role="img" aria-label="攝取與消耗熱量"></svg>
+<p class="mut">綠＝攝取，灰＝消耗（近 14 天）</p></div>
+
+<h2>今天的飲食</h2><div id="meals"></div>
+
+<h2>AI 教練</h2>
+<div class="row"><button class="alt" data-r="day">今日總結</button><button class="alt" data-r="week">本週檢討</button><button class="alt" data-r="month">本月檢討</button></div>
+<div id="reviews"></div>
+
+<h2>歷史紀錄</h2>
+<div class="seg" id="seg" style="margin-bottom:10px"><button data-t="cal">月曆</button><button data-t="yr">年度總覽</button><button data-t="rv">AI 檢討</button></div>
+<div id="hist"></div>
+
+<h2>設定</h2>
+<div class="card">
+<label>目前體重 (kg)<input id="w0" type="number" step="0.1"></label>
+<label>目標體重 (kg)<input id="wt" type="number" step="0.1"></label>
+<label>目標日期<input id="dt" type="date"></label>
+<label>身高 (cm)<input id="ht" type="number"></label>
+<label>Anthropic API Key（只存在本機）<input id="key" type="password" autocomplete="off"></label>
+<h3>提醒時間</h3>
+<label><input type="checkbox" id="rd" checked>每日記錄飲食與今日總結</label><input id="rdt" type="time" value="21:00">
+<label><input type="checkbox" id="rw" checked>每週檢討</label><div class="tm"><select id="rwd"><option value="1">週日</option><option value="2">週一</option><option value="3">週二</option><option value="4">週三</option><option value="5">週四</option><option value="6">週五</option><option value="7">週六</option></select><input id="rwt" type="time" value="20:00"></div>
+<label><input type="checkbox" id="rm" checked>每月檢討</label><div class="tm"><select id="rmd"><option value="1">1 日</option><option value="2">2 日</option><option value="3">3 日</option><option value="4">4 日</option><option value="5">5 日</option><option value="6">6 日</option><option value="7">7 日</option><option value="8">8 日</option><option value="9">9 日</option><option value="10">10 日</option><option value="11">11 日</option><option value="12">12 日</option><option value="13">13 日</option><option value="14">14 日</option><option value="15">15 日</option><option value="16">16 日</option><option value="17">17 日</option><option value="18">18 日</option><option value="19">19 日</option><option value="20">20 日</option><option value="21">21 日</option><option value="22">22 日</option><option value="23">23 日</option><option value="24">24 日</option><option value="25">25 日</option><option value="26">26 日</option><option value="27">27 日</option><option value="28">28 日</option></select><input id="rmt" type="time" value="20:00"></div>
+<div class="row"><button id="saveP">儲存設定</button><button id="remind" class="alt">套用提醒時間</button></div>
+<h3 style="margin-top:16px">備份與還原</h3>
+<select id="bkr"><option value="none">只備份資料（檔案小）</option><option value="90">資料＋近 90 天照片</option><option value="all">資料＋全部照片（檔案大）</option></select>
+<div class="row"><button id="bk">匯出備份</button><label class="btn alt">匯入還原<input id="bki" type="file" accept=".json,application/json" hidden></label></div>
+<p class="mut" id="bkl"></p></div>
+</main><dialog id="dlg"><b id="dtt"></b><div class="rv" id="dtx" style="margin:10px 0"></div><button onclick="this.closest('dialog').close()">關閉</button></dialog><div id="toast" role="status"></div>
+<script>
+const $=s=>document.querySelector(s),K='dietcoach_v1';
+let db=JSON.parse(localStorage.getItem(K)||'{"days":{},"p":{},"rv":{}}');
+db.rvh??=Object.entries(db.rv||{}).map(([kind,v])=>({kind,...v}));
+const save=()=>{try{localStorage.setItem(K,JSON.stringify(db))}catch(e){toast('儲存空間已滿，請清除舊照片')}};
+const ymd=d=>new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);
+const today=()=>ymd(new Date()),day=k=>db.days[k]??={meals:[]};
+const kin=d=>(d.meals||[]).reduce((a,m)=>a+(m.ai?.kcal||0),0);
+function toast(t){const e=$('#toast');e.textContent=t;e.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.display='none',3500)}
+
+async function sync(){
+  const H=window.Capacitor?.Plugins?.Health;
+  if(!H) return toast('請在 Android App 內使用同步');
+  try{
+    const a=await H.isAvailable();
+    if(!a.available){await H.openHealthConnectSettings();return toast('請先安裝或更新 Health Connect')}
+    await H.requestAuthorization({read:['steps','totalCalories','weight'],write:[],requestHistoryAccess:true});
+    const end=new Date(),start=new Date(end-30*864e5);start.setHours(0,0,0,0);
+    const q={startDate:start.toISOString(),endDate:end.toISOString()};
+    for(const [t,f] of [['steps','steps'],['totalCalories','kcalOut']]){
+      const {samples}=await H.queryAggregated({dataType:t,...q,bucket:'day',aggregation:'sum'});
+      samples.forEach(s=>day(ymd(new Date(s.startDate)))[f]=Math.round(s.value??s.values?.sum??0));
+    }
+    const {samples}=await H.readSamples({dataType:'weight',...q,limit:200,ascending:true});
+    samples.forEach(s=>day(ymd(new Date(s.startDate))).weight=+(+s.value).toFixed(1));
+    save();render();toast('已同步最近 30 天');
+  }catch(e){toast('同步失敗：'+e.message)}
+}
+
+async function ai(content,system,max=1500){
+  if(!db.p.key) throw Error('請先在設定填入 API Key');
+  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+    headers:{'content-type':'application/json','x-api-key':db.p.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({model:'claude-sonnet-5-5',max_tokens:max,system,messages:[{role:'user',content}]})});
+  const j=await r.json();if(!r.ok) throw Error(j.error?.message||r.status);
+  return j.content.map(c=>c.text||'').join('');
+}
+
+const shrink=f=>new Promise(r=>{const i=new Image();i.onload=()=>{const m=640/Math.max(i.width,i.height,640),c=document.createElement('canvas');
+  c.width=i.width*m;c.height=i.height*m;c.getContext('2d').drawImage(i,0,0,c.width,c.height);r(c.toDataURL('image/jpeg',.6))};i.src=URL.createObjectURL(f)});
+
+$('#cam').onchange=async e=>{
+  const f=e.target.files[0];if(!f)return;
+  const img=await shrink(f),m={t:new Date().toTimeString().slice(0,5),imgId:'i'+Date.now().toString(36)};await putImg(m.imgId,img);
+  day(today()).meals.push(m);render();toast('AI 分析中…');
+  try{
+    const t=await ai([{type:'image',source:{type:'base64',media_type:'image/jpeg',data:img.split(',')[1]}},
+      {type:'text',text:'請辨識這餐並估算份量與熱量。只回傳 JSON：{"name":"","kcal":0,"protein_g":0,"note":"一句話"}'}],
+      '你是營養師，估算要務實，不確定時給合理中間值。',300);
+    m.ai=JSON.parse(t.match(/\{[\s\S]*\}/)[0]);
+  }catch(err){toast('分析失敗：'+err.message)}
+  save();render();e.target.value='';
+};
+
+function digest(n){
+  const out=[];
+  for(let i=n-1;i>=0;i--){const k=ymd(new Date(Date.now()-i*864e5)),d=db.days[k]||{};
+    out.push(`${k}｜體重${d.weight??'-'}kg｜步數${d.steps??'-'}｜消耗${d.kcalOut??'-'}kcal｜攝取${kin(d)||'-'}kcal｜${(d.meals||[]).map(m=>m.ai?.name).filter(Boolean).join('、')||'無紀錄'}`)}
+  return out.join('\n');
+}
+
+async function review(kind){
+  const n={day:1,week:7,month:30}[kind],p=db.p,prev=db.rv[kind]?.text;
+  const prompt=`使用者資料：目前${p.w0}kg，目標${p.wt}kg，目標日期${p.dt}，身高${p.ht}cm。\n\n最近${n}天紀錄：\n${digest(n)}\n\n`+
+   (prev?`上一次的${{day:'每日',week:'每週',month:'每月'}[kind]}建議：\n${prev}\n\n請先檢視上次的建議有沒有做到、成效如何。\n`:'')+
+   {day:'請給今日總結：1)今天做得好的 2)熱量與活動缺口 3)明天最重要的 1~2 個具體行動。',
+    week:'請給本週檢討：體重與熱量趨勢、飲食規律問題、運動量，並明確列出下週要調整的 3 件事；若進度落後目標日期，誠實說明並調整預期。',
+    month:'請給本月檢討：整體進度是否符合目標日期、哪些習慣有效或無效、是否需要調整每日熱量或運動目標，以及下個月的 3 個重點。'}[kind];
+  toast('AI 分析中…');
+  try{const text=await ai(prompt,'你是溫和但誠實的減重教練。用繁體中文、簡潔、具體可執行。熱量估算有誤差，請提醒趨勢比單日數字重要。不做醫療診斷；不建議極端節食（成人每日攝取勿低於約1200kcal）；若有身體不適或慢性病，建議諮詢醫師。');db.rv[kind]={date:today(),text};db.rvh.push({kind,date:today(),text});if(kind==='day')day(today()).review=text;save();render()}
+  catch(e){toast(e.message)}
+}
+document.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>review(b.dataset.r));
+
+const rmIds=['rd','rdt','rw','rwd','rwt','rm','rmd','rmt'];
+const readRm=()=>Object.fromEntries(rmIds.map(i=>[i,$('#'+i).type==='checkbox'?$('#'+i).checked:$('#'+i).value]));
+$('#saveP').onclick=()=>{db.p={w0:+$('#w0').value,wt:+$('#wt').value,dt:$('#dt').value,ht:+$('#ht').value,key:$('#key').value.trim(),rm:readRm()};save();render();toast('已儲存')};
+
+function render(){
+  const d=day(today()),p=db.p,ws=Object.keys(db.days).sort().filter(k=>db.days[k].weight),lw=ws.length?db.days[ws.at(-1)].weight:p.w0;
+  $('#stats').innerHTML=[['體重',lw??'-'],['步數',d.steps??'-'],['消耗',d.kcalOut??'-'],['攝取',kin(d)||'-']].map(([a,b])=>`<div><b>${b}</b><span>${a}</span></div>`).join('');
+  $('#goal').textContent=p.wt&&lw?`距離目標 ${p.wt}kg 還差 ${(lw-p.wt).toFixed(1)}kg`:'先在下方設定目標體重';
+  $('#meals').innerHTML=d.meals.length?d.meals.map(m=>`<div class="card meal"><img data-img="${m.imgId||''}" alt=""><div><b>${m.ai?.name||'分析中…'}</b><br><span class="mut">${m.t}${m.ai?`｜約 ${m.ai.kcal} kcal｜蛋白質 ${m.ai.protein_g}g`:''}</span><br><span class="mut">${m.ai?.note||''}</span></div></div>`).join(''):'<p class="mut">還沒有紀錄，拍下今天吃的第一餐。</p>';
+  $('#reviews').innerHTML=['day','week','month'].filter(k=>db.rv[k]).map(k=>`<div class="card"><span class="mut">${{day:'今日總結',week:'本週檢討',month:'本月檢討'}[k]}｜${db.rv[k].date}</span><div class="rv">${db.rv[k].text.replace(/</g,'&lt;')}</div></div>`).join('');
+  ['w0','wt','dt','ht','key'].forEach(k=>$('#'+k).value=p[k]??'');
+  if(p.rm)rmIds.forEach(i=>{const e=$('#'+i);e.type==='checkbox'?e.checked=p.rm[i]:e.value=p.rm[i]});
+  const n=Object.keys(db.days).length;$('#bkl').textContent=(db.lastBackup?`上次備份：${db.lastBackup}`:'還沒備份過')+(n>14&&(!db.lastBackup||Date.now()-new Date(db.lastBackup)>30*864e5)?'｜建議現在備份':'');
+  drawCharts();renderHist();loadImgs();
+}
+const idb=new Promise((ok,no)=>{const r=indexedDB.open('dc_img',1);r.onupgradeneeded=()=>r.result.createObjectStore('i');r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)});
+const tx=async(mode,fn)=>{const d=await idb;return new Promise((ok,no)=>{const q=fn(d.transaction('i',mode).objectStore('i'));q.onsuccess=()=>ok(q.result);q.onerror=()=>no(q.error)})};
+const putImg=(k,v)=>tx('readwrite',s=>s.put(v,k)),getImg=k=>tx('readonly',s=>s.get(k)),delImg=k=>tx('readwrite',s=>s.delete(k));
+function loadImgs(){document.querySelectorAll('img[data-img]').forEach(async e=>{const id=e.dataset.img;if(id&&!e.getAttribute('src')){const v=await getImg(id).catch(()=>null);if(v)e.src=v}})}
+(async()=>{let ch=0;for(const d of Object.values(db.days))for(const m of d.meals)if(m.img){m.imgId='i'+Math.random().toString(36).slice(2);await putImg(m.imgId,m.img);delete m.img;ch=1}if(ch){save();render()}})();
+
+let hs={tab:'cal',ym:today().slice(0,7),sel:null,ry:+today().slice(0,4),rf:'week',rn:20},tr=30;
+const esc=t=>String(t??'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const KN={day:'今日總結',week:'本週檢討',month:'本月檢討'};
+const avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:null,f1=v=>v==null?'-':v.toFixed(1),r0=v=>v?Math.round(v):'-';
+const chg=v=>v==null?'-':(v>0?'+':'')+v.toFixed(1)+'kg',has=d=>d&&(d.meals.length||d.weight||d.steps);
+const monthKeys=ym=>{const[y,m]=ym.split('-').map(Number),n=new Date(y,m,0).getDate();return[...Array(n)].map((_,i)=>`${ym}-${String(i+1).padStart(2,'0')}`)};
+function stat(keys){
+  const ds=keys.map(k=>db.days[k]).filter(Boolean),ws=ds.map(d=>d.weight).filter(Boolean);
+  return{n:ds.filter(has).length,w:avg(ws),dw:ws.length>1?ws.at(-1)-ws[0]:null,kin:avg(ds.map(kin).filter(Boolean)),st:avg(ds.map(d=>d.steps).filter(Boolean))};
+}
+function dayCard(k){
+  const d=db.days[k]||{meals:[]};
+  return`<div class="card"><b>${k}</b><div class="stats" style="margin:8px 0">${[['體重',d.weight??'-'],['步數',d.steps??'-'],['消耗',d.kcalOut??'-'],['攝取',kin(d)||'-']].map(([a,b])=>`<div><b>${b}</b><span>${a}</span></div>`).join('')}</div>`
+   +(d.meals.map((m,i)=>`<div class="meal" style="margin-top:8px"><img data-img="${m.imgId||''}" alt=""><div><b>${esc(m.ai?.name||'未分析')}</b><br><span class="mut">${m.t}${m.ai?`｜${m.ai.kcal} kcal｜蛋白質 ${m.ai.protein_g}g`:''}</span><br><button class="alt" style="padding:2px 10px;font-size:13px" data-del="${k}|${i}">刪除</button></div></div>`).join('')||'<p class="mut">當天沒有餐點紀錄</p>')
+   +(d.review?`<p class="mut" style="margin:10px 0 0">AI 今日總結</p><div class="rv">${esc(d.review)}</div>`:'')+'</div>';
+}
+function viewCal(){
+  const ks=monthKeys(hs.ym),[y,m]=hs.ym.split('-').map(Number),first=new Date(y,m-1,1).getDay(),t=today(),s=stat(ks);
+  if(!hs.sel||!hs.sel.startsWith(hs.ym))hs.sel=ks.includes(t)?t:ks.filter(k=>k<=t&&has(db.days[k])).at(-1)||null;
+  let h=`<div class="row nav"><button class="alt" data-nav="-1" aria-label="上個月">‹</button><b>${y} 年 ${m} 月</b><button class="alt" data-nav="1" aria-label="下個月" ${hs.ym>=t.slice(0,7)?'disabled':''}>›</button></div>`;
+  h+=`<p class="mut">記錄 ${s.n} 天｜平均體重 ${f1(s.w)}kg｜月內變化 ${chg(s.dw)}｜平均攝取 ${r0(s.kin)} kcal｜平均步數 ${r0(s.st)}</p>`;
+  h+='<div class="cal">'+[...'日一二三四五六'].map(c=>`<span class="mut">${c}</span>`).join('')+'<i></i>'.repeat(first);
+  ks.forEach((k,i)=>{const d=db.days[k],c=[];if(d&&d.meals.length)c.push('dot');if(d&&kin(d)&&d.kcalOut)c.push(kin(d)<=d.kcalOut?'g':'a');if(k===hs.sel)c.push('sel');
+    h+=`<button class="${c.join(' ')}" data-day="${k}" ${k>t?'disabled':''}>${i+1}</button>`});
+  return h+'</div><p class="mut">綠＝熱量赤字，橘＝熱量盈餘，圓點＝有餐點紀錄</p>'+(hs.sel?dayCard(hs.sel):'<p class="mut">這個月還沒有紀錄</p>');
+}
+function viewYr(){
+  const ms=[...Array(12)].map((_,i)=>`${hs.ry}-${String(i+1).padStart(2,'0')}`).map(ym=>({ym,s:stat(monthKeys(ym))})).filter(r=>r.s.n),ys=stat(ms.flatMap(r=>monthKeys(r.ym)));
+  return`<div class="row nav"><button class="alt" data-ynav="-1" aria-label="前一年">‹</button><b>${hs.ry} 年</b><button class="alt" data-ynav="1" aria-label="後一年" ${hs.ry>=+today().slice(0,4)?'disabled':''}>›</button></div><p class="mut">全年記錄 ${ys.n} 天｜平均體重 ${f1(ys.w)}kg｜全年變化 ${chg(ys.dw)}</p>`
+   +(ms.map(r=>`<button class="li" style="grid-template-columns:40px 1fr" data-ym="${r.ym}"><b>${+r.ym.slice(5)} 月</b><span>${f1(r.s.w)}kg｜月內 ${chg(r.s.dw)}<br><span class="mut">攝取均 ${r0(r.s.kin)} kcal｜記錄 ${r.s.n} 天</span></span></button>`).join('')||'<p class="mut">這一年沒有紀錄</p>');
+}
+function viewRv(){
+  const all=db.rvh.map((r,i)=>({...r,i})).filter(r=>hs.rf==='all'||r.kind===hs.rf).reverse(),sh=all.slice(0,hs.rn);
+  return`<div class="seg" style="margin-bottom:8px">${[['week','週'],['month','月'],['day','日'],['all','全部']].map(([k,l])=>`<button data-rf="${k}" class="${hs.rf===k?'on':''}">${l}</button>`).join('')}</div>`
+   +(sh.map(r=>`<button class="li" style="grid-template-columns:86px 1fr" data-rv="${r.i}"><b>${r.date}</b><span>${r.kind==='all'?'':KN[r.kind]}<br><span class="mut">${esc(r.text.replace(/\s+/g,' ').slice(0,26))}…</span></span></button>`).join('')||'<p class="mut">還沒有這類檢討紀錄</p>')
+   +(all.length>sh.length?`<button class="alt" data-more="1">顯示更多（還有 ${all.length-sh.length} 筆）</button>`:'');
+}
+function renderHist(){
+  document.querySelectorAll('#seg button').forEach(b=>b.classList.toggle('on',b.dataset.t===hs.tab));
+  const el=$('#hist'),q=(s,f)=>el.querySelectorAll(s).forEach(f);
+  el.innerHTML=hs.tab==='cal'?viewCal():hs.tab==='yr'?viewYr():viewRv();
+  q('[data-nav]',b=>b.onclick=()=>{const[y,m]=hs.ym.split('-').map(Number);hs.ym=ymd(new Date(y,m-1+ +b.dataset.nav,1)).slice(0,7);renderHist()});
+  q('[data-day]',b=>b.onclick=()=>{hs.sel=b.dataset.day;renderHist()});
+  q('[data-ynav]',b=>b.onclick=()=>{hs.ry+=+b.dataset.ynav;renderHist()});
+  q('[data-ym]',b=>b.onclick=()=>{hs.tab='cal';hs.ym=b.dataset.ym;hs.sel=null;renderHist()});
+  q('[data-rf]',b=>b.onclick=()=>{hs.rf=b.dataset.rf;hs.rn=20;renderHist()});
+  q('[data-more]',b=>b.onclick=()=>{hs.rn+=20;renderHist()});
+  q('[data-rv]',b=>b.onclick=()=>{const r=db.rvh[+b.dataset.rv];$('#dtt').textContent=`${r.date}｜${KN[r.kind]}`;$('#dtx').textContent=r.text;$('#dlg').showModal()});
+  q('[data-del]',b=>b.onclick=()=>{const[k,i]=b.dataset.del.split('|'),m=db.days[k].meals[+i];if(confirm('刪除這筆餐點紀錄？')){if(m.imgId)delImg(m.imgId);db.days[k].meals.splice(+i,1);save();render()}});
+  loadImgs();
+}
+$('#seg').onclick=e=>{const t=e.target.dataset.t;if(t){hs.tab=t;renderHist()}};
+$('#trs').onclick=e=>{const n=e.target.dataset.n;if(n){tr=n==='all'?'all':+n;drawCharts()}};
+const trN=()=>tr==='all'?Math.max(30,Math.ceil((Date.now()-new Date(Object.keys(db.days).filter(k=>db.days[k].weight).sort()[0]||today()))/864e5)+1):tr;
+async function exportBk(){
+  const r=$('#bkr').value,cut=r==='all'?'':ymd(new Date(Date.now()-90*864e5));toast('打包中…');
+  const imgs={};
+  if(r!=='none')for(const[k,d]of Object.entries(db.days))if(!cut||k>=cut)for(const m of d.meals)if(m.imgId){const v=await getImg(m.imgId).catch(()=>null);if(v)imgs[m.imgId]=v}
+  const{key,...p}=db.p,out=JSON.stringify({v:1,at:new Date().toISOString(),db:{...db,p},imgs});
+  const name=`diet-coach-backup-${today()}.json`,F=window.Capacitor?.Plugins?.Filesystem,S=window.Capacitor?.Plugins?.Share;
+  try{
+    if(F&&S){
+      const o={path:name,directory:'CACHE',encoding:'utf8'};let uri;
+      for(let i=0;i<out.length;){let e=Math.min(i+2e6,out.length);const c=out.charCodeAt(e-1);if(c>=0xD800&&c<=0xDBFF&&e<out.length)e--;
+        const data=out.slice(i,e);if(i===0)uri=(await F.writeFile({...o,data})).uri;else await F.appendFile({...o,data});i=e}
+      await S.share({title:name,url:uri,dialogTitle:'儲存備份檔'});
+    }else{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([out],{type:'application/json'}));a.download=name;a.click()}
+    db.lastBackup=today();save();render();toast('備份完成');
+  }catch(e){toast('備份失敗：'+e.message)}
+}
+$('#bk').onclick=exportBk;
+$('#bki').onchange=async e=>{
+  const f=e.target.files[0];if(!f)return;
+  try{
+    const j=JSON.parse(await f.text());if(j.v!==1||!j.db?.days)throw Error('不是有效的備份檔');
+    if(!confirm(`還原會取代目前所有資料（備份日期 ${j.at?.slice(0,10)}）。確定嗎？`))return;
+    for(const[id,v]of Object.entries(j.imgs||{}))await putImg(id,v);
+    const old=db.p;db=j.db;db.p={...db.p,key:old.key,rm:db.p.rm||old.rm};db.rvh??=[];db.rv??={};save();render();toast('已還原');
+  }catch(err){toast('還原失敗：'+err.message)}
+  e.target.value='';
+};
+$('#sync').onclick=sync;render();
+
+function drawCharts(){
+  document.querySelectorAll('#trs button').forEach(b=>b.classList.toggle('on',b.dataset.n==String(tr)));
+  const N=trN(),W=320,H=140,P=24,ks=[...Array(N)].map((_,i)=>ymd(new Date(Date.now()-(N-1-i)*864e5)));
+  const pts=ks.map((k,i)=>[i,db.days[k]?.weight]).filter(p=>p[1]),wt=db.p.wt;
+  if(pts.length<2){$('#chart').innerHTML='<text x="10" y="70" font-size="13" fill="var(--mut)">同步體重資料後會顯示趨勢</text>'}
+  else{
+    const vs=pts.map(p=>p[1]).concat(wt||[]),lo=Math.min(...vs)-.5,hi=Math.max(...vs)+.5;
+    const x=i=>P+i*(W-2*P)/(N-1),y=v=>H-P-(v-lo)/(hi-lo)*(H-2*P);
+    const ma=pts.map(p=>{const w=pts.filter(q=>q[0]<=p[0]&&q[0]>p[0]-7);return[p[0],w.reduce((a,q)=>a+q[1],0)/w.length]});
+    const d=ma.map((p,j)=>(j?'L':'M')+x(p[0]).toFixed(1)+' '+y(p[1]).toFixed(1)).join('');
+    $('#chart').innerHTML=(wt?`<line x1="${P}" x2="${W-P}" y1="${y(wt)}" y2="${y(wt)}" stroke="var(--warn)" stroke-dasharray="4"/><text x="${W-P}" y="${y(wt)-3}" text-anchor="end" font-size="10" fill="var(--warn)">目標 ${wt}</text>`:'')
+      +(pts.length>120?'':pts.map(p=>`<circle cx="${x(p[0])}" cy="${y(p[1])}" r="2.5" fill="var(--mut)"/>`).join(''))
+      +`<path d="${d}" fill="none" stroke="var(--ac)" stroke-width="2.5"/><text x="${P}" y="12" font-size="10" fill="var(--mut)">體重 kg（線＝7 日平均）</text>`;
+  }
+  const k2=ks.slice(-14),mx=Math.max(1,...k2.map(k=>Math.max(kin(db.days[k]||{}),db.days[k]?.kcalOut||0))),bw=(W-2*P)/14;
+  $('#cal').innerHTML=k2.map((k,i)=>{const d=db.days[k]||{},a=kin(d)/mx*90,b=(d.kcalOut||0)/mx*90,x=P+i*bw;
+    return`<rect x="${x}" y="${100-a}" width="${bw/2-1}" height="${a}" fill="var(--ac)"/><rect x="${x+bw/2}" y="${100-b}" width="${bw/2-1}" height="${b}" fill="var(--mut)" opacity=".6"/>`}).join('')
+    +`<text x="${P}" y="108" font-size="9" fill="var(--mut)">最高 ${mx} kcal</text>`;
+}
+async function remind(){
+  const L=window.Capacitor?.Plugins?.LocalNotifications;if(!L)return toast('請在 Android App 內使用');
+  const r=await L.requestPermissions();if(r.display!=='granted')return toast('請允許通知權限');
+  db.p.rm=readRm();save();const m=db.p.rm,hm=t=>{const [hour,minute]=t.split(':').map(Number);return{hour,minute}};
+  const n=(id,title,body,on)=>({id,title,body,schedule:{on,allowWhileIdle:true}}),list=[];
+  if(m.rd)list.push(n(1,'記錄今天的飲食','拍下餐點，並看看今日總結',hm(m.rdt)));
+  if(m.rw)list.push(n(2,'本週檢討時間','看看這週進度與下週要調整的事',{weekday:+m.rwd,...hm(m.rwt)}));
+  if(m.rm)list.push(n(3,'本月檢討時間','回顧這個月、調整方向，並到設定匯出備份',{day:+m.rmd,...hm(m.rmt)}));
+  await L.cancel({notifications:[{id:1},{id:2},{id:3}]}).catch(()=>{});
+  if(list.length)await L.schedule({notifications:list});
+  toast(list.length?'提醒已更新':'已關閉所有提醒');
+}
+$('#remind').onclick=remind;
+window.Capacitor?.Plugins?.LocalNotifications?.addListener('localNotificationActionPerformed',e=>review({1:'day',2:'week',3:'month'}[e.notification.id]||'day'));
+if(window.Capacitor?.Plugins?.Health)sync();
+</script></body></html>
