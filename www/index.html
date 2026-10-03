@@ -84,16 +84,19 @@ async function sync(){
   try{
     const a=await H.isAvailable();
     if(!a.available){await H.openHealthConnectSettings();return toast('請先安裝或更新 Health Connect')}
-    await H.requestAuthorization({read:['steps','totalCalories','weight'],write:[],requestHistoryAccess:true});
+    await H.requestAuthorization({read:['steps','totalCalories','calories','basalCalories','weight'],write:[],requestHistoryAccess:true});
     const end=new Date(),start=new Date(end-30*864e5);start.setHours(0,0,0,0);
     const q={startDate:start.toISOString(),endDate:end.toISOString()};
-    for(const [t,f] of [['steps','steps'],['totalCalories','kcalOut']]){
-      const {samples}=await H.queryAggregated({dataType:t,...q,bucket:'day',aggregation:'sum'});
-      samples.forEach(s=>day(ymd(new Date(s.startDate)))[f]=Math.round(s.value??s.values?.sum??0));
+    const fails=[],set=(samples,f,add)=>samples.forEach(s=>{const d=day(ymd(new Date(s.startDate))),v=Math.round(s.value??s.values?.sum??0);d[f]=add?(d[f]||0)+v:v});
+    const agg=async t=>(await H.queryAggregated({dataType:t,...q,bucket:'day',aggregation:'sum'})).samples;
+    try{set(await agg('steps'),'steps')}catch(e){fails.push('步數：'+e.message)}
+    try{set(await agg('totalCalories'),'kcalOut')}
+    catch(e1){
+      try{set(await agg('calories'),'kcalOut');try{set(await agg('basalCalories'),'kcalOut',true)}catch(_){}}
+      catch(e2){fails.push('消耗熱量：'+e2.message)}
     }
-    const {samples}=await H.readSamples({dataType:'weight',...q,limit:200,ascending:true});
-    samples.forEach(s=>day(ymd(new Date(s.startDate))).weight=+(+s.value).toFixed(1));
-    save();render();toast('已同步最近 30 天');
+    try{const {samples}=await H.readSamples({dataType:'weight',...q,limit:200,ascending:true});samples.forEach(s=>day(ymd(new Date(s.startDate))).weight=+(+s.value).toFixed(1))}catch(e){fails.push('體重：'+e.message)}
+    save();render();toast(fails.length?'部分同步失敗：'+fails.join('；'):'已同步最近 30 天');
   }catch(e){toast('同步失敗：'+e.message)}
 }
 
@@ -263,7 +266,7 @@ function drawCharts(){
   const k2=ks.slice(-14),mx=Math.max(1,...k2.map(k=>Math.max(kin(db.days[k]||{}),db.days[k]?.kcalOut||0))),bw=(W-2*P)/14;
   $('#cal').innerHTML=k2.map((k,i)=>{const d=db.days[k]||{},a=kin(d)/mx*90,b=(d.kcalOut||0)/mx*90,x=P+i*bw;
     return`<rect x="${x}" y="${100-a}" width="${bw/2-1}" height="${a}" fill="var(--ac)"/><rect x="${x+bw/2}" y="${100-b}" width="${bw/2-1}" height="${b}" fill="var(--mut)" opacity=".6"/>`}).join('')
-    +`<text x="${P}" y="108" font-size="9" fill="var(--mut)">最高 ${mx} kcal</text>`;
+    +(mx>1?`<text x="${P}" y="108" font-size="9" fill="var(--mut)">最高 ${mx} kcal</text>`:'');
 }
 async function remind(){
   const L=window.Capacitor?.Plugins?.LocalNotifications;if(!L)return toast('請在 Android App 內使用');
