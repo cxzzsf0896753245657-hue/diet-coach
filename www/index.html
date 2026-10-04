@@ -23,6 +23,7 @@ summary{cursor:pointer;font-size:14px}
 .cal .sel{outline:2px solid var(--ink);outline-offset:1px}.cal .dot::after{content:'';position:absolute;left:calc(50% - 2px);bottom:3px;width:4px;height:4px;border-radius:50%;background:var(--ink)}
 .li{display:grid;gap:8px;width:100%;text-align:left;background:var(--card);color:var(--ink);border:1px solid var(--ln);border-radius:10px;margin-bottom:6px;padding:10px;font-size:14px}
 svg{touch-action:manipulation;cursor:pointer}.lg{display:inline-block;width:10px;height:10px;border-radius:2px;margin:0 4px 0 8px;vertical-align:middle}
+#mdlg{width:min(92vw,520px)}textarea{resize:vertical}
 img:not([src]){visibility:hidden}
 dialog{background:var(--card);color:var(--ink);border:1px solid var(--ln);border-radius:12px;max-width:90vw;max-height:80vh;overflow:auto}
 button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--warn);outline-offset:2px}
@@ -35,7 +36,8 @@ input,textarea,select{font:inherit;width:100%;padding:9px;border-radius:8px;bord
 <div class="card"><div class="stats" id="stats"></div>
 <p class="mut" id="goal"></p></div>
 <div class="row"><button id="sync">同步 Health Connect</button>
-<label class="btn alt">拍照記錄飲食<input id="cam" type="file" accept="image/*" capture="environment" hidden></label></div>
+<label class="btn alt">拍照記錄飲食<input id="cam" type="file" accept="image/*" capture="environment" hidden></label>
+<button class="alt" id="addm">文字／食物庫記錄</button></div>
 
 <h2>趨勢</h2><div class="card"><div class="seg" id="trs" style="margin-bottom:8px"><button data-n="30">30 天</button><button data-n="90">90 天</button><button data-n="365">1 年</button><button data-n="all">全部</button></div>
 <b>體重變化</b>
@@ -59,6 +61,17 @@ input,textarea,select{font:inherit;width:100%;padding:9px;border-radius:8px;bord
 <div class="seg" id="seg" style="margin-bottom:10px"><button data-t="cal">月曆</button><button data-t="yr">年度總覽</button><button data-t="rv">AI 檢討</button></div>
 <div id="hist"></div>
 
+<h2>食物庫</h2>
+<div class="card" id="foodcard">
+<input id="fq" placeholder="搜尋食物庫…">
+<div id="flist"></div>
+<h3>新增／編輯食物</h3>
+<label>名稱<input id="fn" placeholder="例如：白飯"></label>
+<label>份量說明<input id="fu" value="1份" placeholder="1碗、1個、100g"></label>
+<div class="tm"><label>熱量 kcal<input id="fk" type="number" inputmode="decimal"></label><label>蛋白質 g（選填）<input id="fp" type="number" inputmode="decimal"></label></div>
+<div class="row"><button id="fs">儲存</button><button class="alt" id="fa">AI 估算熱量</button><button class="alt" id="fd" hidden>刪除</button></div>
+</div>
+
 <h2>設定</h2>
 <div class="card">
 <label>目前體重 (kg)<input id="w0" type="number" step="0.1"></label>
@@ -78,10 +91,18 @@ input,textarea,select{font:inherit;width:100%;padding:9px;border-radius:8px;bord
 <select id="bkr"><option value="none">只備份資料（檔案小）</option><option value="90">資料＋近 90 天照片</option><option value="all">資料＋全部照片（檔案大）</option></select>
 <div class="row"><button id="bk">匯出備份</button><label class="btn alt">匯入還原<input id="bki" type="file" accept=".json,application/json" hidden></label></div>
 <p class="mut" id="bkl"></p></div>
-</main><dialog id="dlg"><b id="dtt"></b><div class="rv" id="dtx" style="margin:10px 0"></div><button onclick="this.closest('dialog').close()">關閉</button></dialog><div id="toast" role="status"></div>
+</main><dialog id="mdlg"><b>新增餐點</b>
+<img id="mpv" alt="餐點照片" hidden style="width:100%;max-height:180px;object-fit:cover;border-radius:10px;margin:8px 0">
+<label>補充說明（選填，讓 AI 判斷更準）<textarea id="mdesc" rows="3" placeholder="例如：雞腿便當，飯吃一半，沒吃雞皮，加一份青菜"></textarea></label>
+<b style="font-size:14px">從食物庫加入</b>
+<input id="msq" placeholder="搜尋食物庫…" style="margin-top:6px"><div id="msr"></div>
+<div id="msel"></div><p class="mut" id="msum" style="margin:4px 0"></p>
+<div class="row" style="margin-top:8px"><button id="mgo">AI 分析</button><button class="alt" id="mx">取消</button></div></dialog>
+<dialog id="dlg"><b id="dtt"></b><div class="rv" id="dtx" style="margin:10px 0"></div><button onclick="this.closest('dialog').close()">關閉</button></dialog><div id="toast" role="status"></div>
 <script>
 const $=s=>document.querySelector(s),K='dietcoach_v1';
 let db=JSON.parse(localStorage.getItem(K)||'{"days":{},"p":{},"rv":{}}');
+db.foods??=[];
 db.rvh??=Object.entries(db.rv||{}).map(([kind,v])=>({kind,...v}));
 const save=()=>{try{localStorage.setItem(K,JSON.stringify(db))}catch(e){toast('儲存空間已滿，請清除舊照片')}};
 const ymd=d=>new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);
@@ -136,18 +157,7 @@ async function ai(content,system,max=1500){
 const shrink=f=>new Promise(r=>{const i=new Image();i.onload=()=>{const m=640/Math.max(i.width,i.height,640),c=document.createElement('canvas');
   c.width=i.width*m;c.height=i.height*m;c.getContext('2d').drawImage(i,0,0,c.width,c.height);r(c.toDataURL('image/jpeg',.6))};i.src=URL.createObjectURL(f)});
 
-$('#cam').onchange=async e=>{
-  const f=e.target.files[0];if(!f)return;
-  const img=await shrink(f),m={t:new Date().toTimeString().slice(0,5),imgId:'i'+Date.now().toString(36)};await putImg(m.imgId,img);
-  day(today()).meals.push(m);render();toast('AI 分析中…');
-  try{
-    const t=await ai([{type:'image',source:{type:'base64',media_type:'image/jpeg',data:img.split(',')[1]}},
-      {type:'text',text:'請辨識這餐並估算份量與熱量。只回傳 JSON：{"name":"","kcal":0,"protein_g":0,"note":"一句話"}'}],
-      '你是營養師，估算要務實，不確定時給合理中間值。',300);
-    m.ai=JSON.parse(t.match(/\{[\s\S]*\}/)[0]);
-  }catch(err){toast('分析失敗：'+err.message)}
-  save();render();e.target.value='';
-};
+$('#cam').onchange=async e=>{const f=e.target.files[0];if(!f)return;openMeal(await shrink(f));e.target.value=''};
 
 function digest(n){
   const out=[];
@@ -177,12 +187,12 @@ function render(){
   const d=day(today()),p=db.p,ws=Object.keys(db.days).sort().filter(k=>db.days[k].weight),lw=ws.length?db.days[ws.at(-1)].weight:p.w0;
   $('#stats').innerHTML=[['體重',lw??'-'],['步數',d.steps??'-'],['消耗',d.kcalOut??'-'],['攝取',kin(d)||'-']].map(([a,b])=>`<div><b>${b}</b><span>${a}</span></div>`).join('');
   $('#goal').textContent=p.wt&&lw?`距離目標 ${p.wt}kg 還差 ${(lw-p.wt).toFixed(1)}kg`:'先在下方設定目標體重';
-  $('#meals').innerHTML=d.meals.length?d.meals.map(m=>`<div class="card meal"><img data-img="${m.imgId||''}" alt=""><div><b>${m.ai?.name||'分析中…'}</b><br><span class="mut">${m.t}${m.ai?`｜約 ${m.ai.kcal} kcal｜蛋白質 ${m.ai.protein_g}g`:''}</span><br><span class="mut">${m.ai?.note||''}</span></div></div>`).join(''):'<p class="mut">還沒有紀錄，拍下今天吃的第一餐。</p>';
+  $('#meals').innerHTML=d.meals.length?d.meals.map((m,i)=>`<div class="card meal">${m.imgId?`<img data-img="${m.imgId}" alt="">`:''}<div><b>${esc(m.ai?.name||(busy.has(m)?'分析中…':'未分析'))}</b><br><span class="mut">${m.t}${m.ai?`｜約 ${m.ai.kcal} kcal｜蛋白質 ${m.ai.protein_g}g`:''}</span>${m.desc?`<br><span class="mut">說明：${esc(m.desc)}</span>`:''}<br><span class="mut">${esc(m.ai?.note||'')}</span>${m.ai?`<br><button class="alt" style="padding:2px 10px;font-size:13px" data-sv="${today()}|${i}">存入食物庫</button>`:''}</div></div>`).join(''):'<p class="mut">還沒有紀錄，拍下今天吃的第一餐，或用文字／食物庫記錄。</p>';bindSv($('#meals'));
   $('#reviews').innerHTML=['day','week','month'].filter(k=>db.rv[k]).map(k=>`<div class="card"><span class="mut">${{day:'今日總結',week:'本週檢討',month:'本月檢討'}[k]}｜${db.rv[k].date}</span><div class="rv">${db.rv[k].text.replace(/</g,'&lt;')}</div></div>`).join('');
   ['w0','wt','dt','ht','key','gkey','gmodel'].forEach(k=>$('#'+k).value=p[k]??'');$('#prov').value=p.prov||'gemini';
   if(p.rm)rmIds.forEach(i=>{const e=$('#'+i);e.type==='checkbox'?e.checked=p.rm[i]:e.value=p.rm[i]});
   const n=Object.keys(db.days).length;$('#bkl').textContent=(db.lastBackup?`上次備份：${db.lastBackup}`:'還沒備份過')+(n>14&&(!db.lastBackup||Date.now()-new Date(db.lastBackup)>30*864e5)?'｜建議現在備份':'');
-  drawCharts();renderHist();loadImgs();
+  drawCharts();renderHist();renderFoods();loadImgs();
 }
 const idb=new Promise((ok,no)=>{const r=indexedDB.open('dc_img',1);r.onupgradeneeded=()=>r.result.createObjectStore('i');r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)});
 const tx=async(mode,fn)=>{const d=await idb;return new Promise((ok,no)=>{const q=fn(d.transaction('i',mode).objectStore('i'));q.onsuccess=()=>ok(q.result);q.onerror=()=>no(q.error)})};
@@ -203,7 +213,7 @@ function stat(keys){
 function dayCard(k){
   const d=db.days[k]||{meals:[]};
   return`<div class="card"><b>${k}</b><div class="stats" style="margin:8px 0">${[['體重',d.weight??'-'],['步數',d.steps??'-'],['消耗',d.kcalOut??'-'],['攝取',kin(d)||'-']].map(([a,b])=>`<div><b>${b}</b><span>${a}</span></div>`).join('')}</div>`
-   +(d.meals.map((m,i)=>`<div class="meal" style="margin-top:8px"><img data-img="${m.imgId||''}" alt=""><div><b>${esc(m.ai?.name||'未分析')}</b><br><span class="mut">${m.t}${m.ai?`｜${m.ai.kcal} kcal｜蛋白質 ${m.ai.protein_g}g`:''}</span><br><button class="alt" style="padding:2px 10px;font-size:13px" data-del="${k}|${i}">刪除</button></div></div>`).join('')||'<p class="mut">當天沒有餐點紀錄</p>')
+   +(d.meals.map((m,i)=>`<div class="meal" style="margin-top:8px">${m.imgId?`<img data-img="${m.imgId}" alt="">`:''}<div><b>${esc(m.ai?.name||'未分析')}</b><br><span class="mut">${m.t}${m.ai?`｜${m.ai.kcal} kcal｜蛋白質 ${m.ai.protein_g}g`:''}</span>${m.desc?`<br><span class="mut">說明：${esc(m.desc)}</span>`:''}<br>${m.ai?`<button class="alt" style="padding:2px 10px;font-size:13px" data-sv="${k}|${i}">存入食物庫</button> `:''}<button class="alt" style="padding:2px 10px;font-size:13px" data-del="${k}|${i}">刪除</button></div></div>`).join('')||'<p class="mut">當天沒有餐點紀錄</p>')
    +(d.review?`<p class="mut" style="margin:10px 0 0">AI 今日總結</p><div class="rv">${esc(d.review)}</div>`:'')+'</div>';
 }
 function viewCal(){
@@ -239,7 +249,7 @@ function renderHist(){
   q('[data-more]',b=>b.onclick=()=>{hs.rn+=20;renderHist()});
   q('[data-rv]',b=>b.onclick=()=>{const r=db.rvh[+b.dataset.rv];$('#dtt').textContent=`${r.date}｜${KN[r.kind]}`;$('#dtx').textContent=r.text;$('#dlg').showModal()});
   q('[data-del]',b=>b.onclick=()=>{const[k,i]=b.dataset.del.split('|'),m=db.days[k].meals[+i];if(confirm('刪除這筆餐點紀錄？')){if(m.imgId)delImg(m.imgId);db.days[k].meals.splice(+i,1);save();render()}});
-  loadImgs();
+  bindSv(el);loadImgs();
 }
 $('#seg').onclick=e=>{const t=e.target.dataset.t;if(t){hs.tab=t;renderHist()}};
 $('#trs').onclick=e=>{const n=e.target.dataset.n;if(n){tr=n==='all'?'all':+n;drawCharts()}};
@@ -267,9 +277,76 @@ $('#bki').onchange=async e=>{
     const j=JSON.parse(await f.text());if(j.v!==1||!j.db?.days)throw Error('不是有效的備份檔');
     if(!confirm(`還原會取代目前所有資料（備份日期 ${j.at?.slice(0,10)}）。確定嗎？`))return;
     for(const[id,v]of Object.entries(j.imgs||{}))await putImg(id,v);
-    const old=db.p;db=j.db;db.p={...db.p,key:old.key,gkey:old.gkey,rm:db.p.rm||old.rm};db.rvh??=[];db.rv??={};save();render();toast('已還原');
+    const old=db.p;db=j.db;db.p={...db.p,key:old.key,gkey:old.gkey,rm:db.p.rm||old.rm};db.rvh??=[];db.rv??={};db.foods??=[];save();render();toast('已還原');
   }catch(err){toast('還原失敗：'+err.message)}
   e.target.value='';
+};
+const busy=new Set();var fe=null,md={img:null,items:[]};
+const fmtF=f=>`${f.unit}｜${f.kcal} kcal${f.protein_g?`｜蛋白質 ${f.protein_g}g`:''}`;
+const foodMatch=q=>db.foods.filter(f=>!q||f.name.toLowerCase().includes(q.toLowerCase())).sort((a,b)=>(b.used||0)-(a.used||0)||a.name.localeCompare(b.name,'zh-Hant'));
+const clearFood=()=>{fe=null;['fn','fk','fp'].forEach(i=>$('#'+i).value='');$('#fu').value='1份';$('#fd').hidden=true};
+function renderFoods(){
+  const q=$('#fq').value.trim(),all=foodMatch(q),sh=all.slice(0,20);
+  $('#flist').innerHTML=(sh.map(f=>`<button class="li" style="grid-template-columns:1fr auto" data-f="${f.id}"><span><b>${esc(f.name)}</b><br><span class="mut">${esc(fmtF(f))}</span></span><span class="mut">編輯</span></button>`).join('')||`<p class="mut">${db.foods.length?'找不到符合的食物':'食物庫是空的。在下方新增常吃的食物，或在餐點旁按「存入食物庫」。'}</p>`)+(all.length>20?`<p class="mut">共 ${all.length} 項，輸入關鍵字可縮小範圍</p>`:'');
+  document.querySelectorAll('#flist [data-f]').forEach(b=>b.onclick=()=>fillFood(db.foods.find(f=>f.id===b.dataset.f)));
+}
+function fillFood(f){
+  fe=f.id||null;$('#fn').value=f.name||'';$('#fu').value=f.unit||'1份';$('#fk').value=f.kcal??'';$('#fp').value=f.protein_g??'';$('#fd').hidden=!fe;
+  $('#foodcard').scrollIntoView({behavior:'smooth',block:'center'});toast(fe?'已載入，修改後按「儲存」':'已帶入表單，確認後按「儲存」');
+}
+const bindSv=el=>el.querySelectorAll('[data-sv]').forEach(b=>b.onclick=()=>{const[k,i]=b.dataset.sv.split('|'),m=db.days[k].meals[+i];fillFood({name:m.ai.name,unit:'1份',kcal:m.ai.kcal,protein_g:m.ai.protein_g})});
+$('#fq').oninput=renderFoods;
+$('#fs').onclick=()=>{
+  const name=$('#fn').value.trim(),kcal=+$('#fk').value;
+  if(!name||$('#fk').value===''||!(kcal>=0))return toast('請填名稱與熱量');
+  const rec={name,unit:$('#fu').value.trim()||'1份',kcal:Math.round(kcal),protein_g:+$('#fp').value||0};
+  if(fe)Object.assign(db.foods.find(f=>f.id===fe),rec);else db.foods.push({id:'f'+Date.now().toString(36),used:0,...rec});
+  save();clearFood();renderFoods();toast('已儲存到食物庫');
+};
+$('#fd').onclick=()=>{if(fe&&confirm('刪除這個食物？')){db.foods=db.foods.filter(f=>f.id!==fe);save();clearFood();renderFoods()}};
+$('#fa').onclick=async()=>{
+  const name=$('#fn').value.trim();if(!name)return toast('請先輸入食物名稱');toast('AI 估算中…');
+  try{const t=await ai(`請估算這個食物的熱量與蛋白質：${name}，份量：${$('#fu').value||'1份'}。只回傳 JSON：{"kcal":0,"protein_g":0}`,'你是營養師，以台灣常見食物與份量為準，給合理的中間值。',200);
+    const o=JSON.parse(t.match(/\{[\s\S]*\}/)[0]);$('#fk').value=Math.round(o.kcal);$('#fp').value=Math.round(o.protein_g);toast('已估算，請確認數字再儲存')}catch(e){toast('估算失敗：'+e.message)}
+};
+const mdTot=()=>md.items.reduce((a,i)=>({k:a.k+i.kcal*i.qty,p:a.p+(i.protein_g||0)*i.qty}),{k:0,p:0});
+function updSum(){const t=mdTot();$('#msum').textContent=md.items.length?`食物庫已選合計：${Math.round(t.k)} kcal｜蛋白質 ${Math.round(t.p)}g`:'';
+  $('#mgo').textContent=(!md.img&&!$('#mdesc').value.trim()&&md.items.length)?'直接加入':'AI 分析'}
+function renderMd(){
+  const res=foodMatch($('#msq').value.trim()).slice(0,6);
+  $('#msr').innerHTML=res.length?res.map(f=>`<button class="li" style="grid-template-columns:1fr auto;padding:6px 10px" data-a="${f.id}"><span>${esc(f.name)} <span class="mut">${esc(fmtF(f))}</span></span><b>＋</b></button>`).join(''):`<p class="mut">${db.foods.length?'找不到符合的食物':'食物庫還是空的，可先關閉視窗到「食物庫」新增'}</p>`;
+  $('#msel').innerHTML=md.items.map((it,i)=>`<div class="row" style="align-items:center;margin:4px 0"><span style="flex:1">${esc(it.name)} <span class="mut">× ${esc(it.unit)}</span></span><input type="number" min="0.25" step="0.25" value="${it.qty}" data-q="${i}" aria-label="份數" style="width:72px;margin:0"><button class="alt" style="padding:4px 10px" data-rm="${i}" aria-label="移除">×</button></div>`).join('');
+  $('#msr').querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{const f=db.foods.find(x=>x.id===b.dataset.a),e=md.items.find(x=>x.id===f.id);if(e)e.qty+=1;else md.items.push({...f,qty:1});renderMd()});
+  $('#msel').querySelectorAll('[data-q]').forEach(b=>b.oninput=()=>{md.items[+b.dataset.q].qty=+b.value||0;updSum()});
+  $('#msel').querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{md.items.splice(+b.dataset.rm,1);renderMd()});
+  updSum();
+}
+function openMeal(img){
+  md={img,items:[]};$('#mdesc').value='';$('#msq').value='';const pv=$('#mpv');pv.hidden=!img;if(img)pv.src=img;
+  renderMd();$('#mdlg').showModal();
+}
+$('#msq').oninput=renderMd;$('#mdesc').oninput=updSum;$('#mx').onclick=()=>$('#mdlg').close();$('#addm').onclick=()=>openMeal(null);
+$('#mgo').onclick=async()=>{
+  const desc=$('#mdesc').value.trim(),items=md.items.filter(i=>i.qty>0),img=md.img;
+  if(!img&&!desc&&!items.length)return toast('請拍照、輸入說明或選擇食物');
+  const m={t:new Date().toTimeString().slice(0,5)};if(desc)m.desc=desc;
+  if(items.length){m.items=items.map(({name,unit,qty,kcal,protein_g})=>({name,unit,qty,kcal,protein_g}));items.forEach(i=>{const f=db.foods.find(x=>x.id===i.id);if(f)f.used=(f.used||0)+1})}
+  const tt=mdTot(),fromLib=()=>({name:items.map(i=>`${i.name}×${i.qty}`).join('、'),kcal:Math.round(tt.k),protein_g:Math.round(tt.p),note:'來自食物庫'});
+  $('#mdlg').close();
+  if(img){m.imgId='i'+Date.now().toString(36);await putImg(m.imgId,img)}
+  day(today()).meals.push(m);
+  if(!img&&!desc){m.ai=fromLib();save();render();return}
+  busy.add(m);save();render();toast('AI 分析中…');
+  try{
+    const parts=[];if(img)parts.push({type:'image',source:{type:'base64',media_type:'image/jpeg',data:img.split(',')[1]}});
+    parts.push({type:'text',text:(img?'請辨識這餐並估算份量與熱量。':'請根據以下說明估算這餐的份量與熱量。')
+      +(desc?`\n使用者補充說明（請優先採用）：${desc}`:'')
+      +(items.length?`\n使用者指定的已知食物（熱量以此為準，總熱量須包含這些，其他有出現的食物再自行估算）：${items.map(i=>`${i.name}×${i.qty}（1 份＝${i.unit}，約 ${i.kcal}kcal、蛋白質 ${i.protein_g||0}g）`).join('、')}`:'')
+      +'\n只回傳 JSON：{"name":"","kcal":0,"protein_g":0,"note":"一句話"}'});
+    const r=await ai(parts,'你是營養師，估算要務實，不確定時給合理中間值；使用者提供的說明與已知食物熱量優先於你對照片的推測。',400);
+    m.ai=JSON.parse(r.match(/\{[\s\S]*\}/)[0]);
+  }catch(err){toast('分析失敗：'+err.message);if(items.length)m.ai=fromLib()}
+  busy.delete(m);save();render();
 };
 $('#sync').onclick=sync;render();
 
