@@ -26,10 +26,15 @@ svg{touch-action:manipulation;cursor:pointer}.lg{display:inline-block;width:10px
 #mdlg{width:min(92vw,520px)}textarea{resize:vertical}
 .hx{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:14px;margin:6px 0}.hx span{color:var(--mut)}.hx b{color:var(--ink);font-weight:600}
 .tab #meals .card{padding:10px;margin-bottom:8px}#meals .meal img{width:52px;height:52px}
-.act{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0 4px}.big{padding:14px 8px;text-align:center;font-size:16px;display:block}
+.act{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0 2px}.big{padding:10px 4px;text-align:center;font-size:14px;display:flex;align-items:center;justify-content:center;line-height:1.3;min-height:44px}
 #nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--card);border-top:1px solid var(--ln);padding-bottom:env(safe-area-inset-bottom);z-index:5}
 #nav button{flex:1;background:transparent;color:var(--mut);border-radius:0;padding:8px 0 6px;font-size:12px;line-height:1.3}#nav button{display:flex;flex-direction:column;align-items:center}#nav .ic{display:flex;align-items:center;justify-content:center;width:56px;height:30px;border-radius:15px;margin-bottom:2px;transition:background .15s}#nav button.on{color:var(--ac);font-weight:600}#nav button.on .ic{background:color-mix(in srgb,var(--ac) 18%,transparent)}
 details.card summary{padding:2px 0}details.card[open] summary{margin-bottom:8px}.tab h2:first-child{margin-top:4px}
+.dp{margin-top:8px}.dp .dl{font-size:15px}
+.bn{display:inline;font-size:30px;font-weight:700;line-height:1.2}.pu{white-space:nowrap}.bigrow{display:flex;justify-content:space-between;align-items:flex-end}
+.pbar{height:12px;border-radius:6px;background:var(--bg);overflow:hidden;margin:10px 0 4px}.pbar i{display:block;height:100%;background:var(--ac);border-radius:6px}
+.wr{display:grid;grid-template-columns:96px 1fr 48px 58px;gap:8px;align-items:center;font-size:14px;padding:6px 0;border-bottom:1px solid var(--ln)}
+.wb{height:8px;background:var(--bg);border-radius:4px;overflow:hidden}.wb i{display:block;height:100%;background:var(--ac);border-radius:4px}.wr .dn{color:var(--ac)}.wr .up{color:var(--warn)}.wr span:last-child{text-align:right}
 img:not([src]){visibility:hidden}
 dialog{background:var(--card);color:var(--ink);border:1px solid var(--ln);border-radius:12px;max-width:90vw;max-height:80vh;overflow:auto}
 button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--warn);outline-offset:2px}
@@ -44,9 +49,9 @@ input,textarea,select{font:inherit;width:100%;padding:9px;border-radius:8px;bord
 <div class="card"><div class="stats" id="stats"></div>
 <p class="mut" id="goal"></p>
 <details><summary class="mut">更多健康數據（今天）</summary><div id="hxd"></div></details></div>
-<div class="act"><label class="btn big">拍照記錄飲食<input id="cam" type="file" accept="image/*" capture="environment" hidden></label>
-<label class="btn alt big">從相簿補登<input id="gal" type="file" accept="image/*" multiple hidden></label>
-<button class="alt big" id="addm" style="grid-column:1/-1">文字／食物庫記錄</button></div>
+<div class="act"><label class="btn big">拍照記錄<input id="cam" type="file" accept="image/*" capture="environment" hidden></label>
+<button class="alt big" id="galb">相簿補登</button><input id="gal" type="file" accept="image/*" multiple hidden>
+<button class="alt big" id="addm">文字／食物庫</button></div>
 <input id="att" type="file" accept="image/*" hidden>
 <h2>今天的飲食</h2><div id="meals"></div>
 <h2>AI 教練</h2>
@@ -54,17 +59,23 @@ input,textarea,select{font:inherit;width:100%;padding:9px;border-radius:8px;bord
 <div id="reviews"></div>
 </section>
 
-<section class="tab" id="t-trend" hidden><div class="card"><div class="seg" id="trs" style="margin-bottom:8px"><button data-n="30">30 天</button><button data-n="90">90 天</button><button data-n="365">1 年</button><button data-n="all">全部</button></div>
-<b>體重變化</b>
-<p class="mut" id="wsum" style="white-space:pre-line;margin:2px 0 6px"></p>
-<svg id="chart" viewBox="0 0 340 190" width="100%" role="img" aria-label="體重趨勢圖"></svg>
+<section class="tab" id="t-trend" hidden>
+<div class="card" id="prog"></div>
+<div class="card"><div class="seg" id="trs" style="margin-bottom:10px"><button data-n="30">30 天</button><button data-n="90">90 天</button><button data-n="365">1 年</button><button data-n="all">全部</button></div>
+<b>體重走勢</b>
+<p class="mut" id="wsum" style="margin:2px 0 6px"></p>
+<svg id="chart" viewBox="0 0 340 170" width="100%" role="img" aria-label="體重走勢圖"></svg>
 <p class="mut" id="wrd" style="min-height:1.6em;margin:2px 0"></p>
-<p class="mut" style="margin:2px 0">圓點＝每天量到的體重，綠線＝7 日平均，橘色虛線＝目標體重</p>
-<b style="display:block;margin-top:16px">每日熱量：吃進去 vs 消耗掉</b>
-<p class="mut" id="csum" style="white-space:pre-line;margin:2px 0 6px"></p>
-<svg id="cal" viewBox="0 0 340 150" width="100%" role="img" aria-label="每日攝取與消耗熱量"></svg>
-<p class="mut" style="margin:2px 0"><span class="lg" style="background:var(--ac);margin-left:0"></span>攝取　<span class="lg" style="background:var(--mut);opacity:.6;margin-left:0"></span>消耗　（近 14 天，下方數字為日期）</p>
-<p class="mut" id="crd" style="min-height:1.6em;margin:2px 0"></p></div></section>
+<p class="mut" style="margin:2px 0;font-size:13px">綠線是體重的大方向（已把每天的小波動平均掉），橘色虛線是你的目標。</p>
+<b id="plt" style="display:block;margin-top:16px">每週平均體重</b>
+<p class="mut" style="margin:2px 0 6px;font-size:13px">▼ 比上一期輕（綠色）　▲ 比上一期重（橘色）</p>
+<div id="wlist"></div></div>
+<div class="card"><b>每天吃得比消耗多還是少？</b>
+<p id="csum" style="margin:4px 0 6px"></p>
+<svg id="cal" viewBox="0 0 340 200" width="100%" role="img" aria-label="每日熱量差"></svg>
+<p class="mut" style="margin:2px 0;font-size:13px">每根柱子是一天（下方數字是日期），數字是差多少大卡。灰點代表那天缺少飲食或消耗紀錄。</p>
+<p class="mut" id="crd" style="min-height:1.6em;margin:2px 0"></p></div>
+</section>
 
 <section class="tab" id="t-hist" hidden><div class="seg" id="seg" style="margin-bottom:10px"><button data-t="cal">月曆</button><button data-t="yr">年度總覽</button><button data-t="rv">AI 檢討</button></div>
 <div id="hist"></div></section>
@@ -98,17 +109,29 @@ input,textarea,select{font:inherit;width:100%;padding:9px;border-radius:8px;bord
 <label><input type="checkbox" id="rm" checked>每月檢討</label><div class="tm"><select id="rmd"><option value="1">1 日</option><option value="2">2 日</option><option value="3">3 日</option><option value="4">4 日</option><option value="5">5 日</option><option value="6">6 日</option><option value="7">7 日</option><option value="8">8 日</option><option value="9">9 日</option><option value="10">10 日</option><option value="11">11 日</option><option value="12">12 日</option><option value="13">13 日</option><option value="14">14 日</option><option value="15">15 日</option><option value="16">16 日</option><option value="17">17 日</option><option value="18">18 日</option><option value="19">19 日</option><option value="20">20 日</option><option value="21">21 日</option><option value="22">22 日</option><option value="23">23 日</option><option value="24">24 日</option><option value="25">25 日</option><option value="26">26 日</option><option value="27">27 日</option><option value="28">28 日</option></select><input id="rmt" type="time" value="20:00"></div>
 <button id="remind" class="alt">套用提醒時間</button></details>
 <details class="card"><summary><b>Health Connect 同步</b></summary>
-<label class="mut" style="display:flex;gap:8px;align-items:center;margin-top:8px">同步範圍<select id="sr" style="width:auto;margin:0"><option value="30">近 30 天</option><option value="90">近 90 天</option><option value="365">近 1 年</option></select></label>
+<label class="mut" style="display:flex;gap:8px;align-items:center;margin-top:8px">同步範圍<select id="sr" style="width:auto;margin:0"><option value="30">近 30 天</option><option value="90">近 90 天</option><option value="365">近 1 年</option><option value="730">近 2 年</option><option value="1825">近 5 年</option></select></label>
+<p class="mut" style="font-size:13px;margin:6px 0">同步過的資料會一直保存在手機裡，不會因為時間過去而被刪除；能抓到多久以前，取決於 Health Connect 本身還留著多少。</p>
 <details id="sd" style="margin-top:6px"><summary class="mut" id="ss"></summary><div class="mut" id="sl" style="font-size:13px"></div></details></details>
 <details class="card"><summary><b>備份與還原</b></summary>
 <select id="bkr"><option value="none">只備份資料（檔案小）</option><option value="90">資料＋近 90 天照片</option><option value="all">資料＋全部照片（檔案大）</option></select>
 <div class="row"><button id="bk">匯出備份</button><label class="btn alt">匯入還原<input id="bki" type="file" accept=".json,application/json" hidden></label></div>
 <p class="mut" id="bkl"></p></details>
 <button id="saveP" style="width:100%">儲存設定</button>
+<p class="mut" style="text-align:center;font-size:12px;margin-top:10px">版本 2026.10.04-f（補登日期選擇）</p>
 </section>
 </main>
-<nav id="nav" aria-label="主選單"><button data-tab="today"><span class="ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7"/><path d="M6 10v9h12v-9"/><path d="M10 19v-5h4v5"/></svg></span><span>今天</span></button><button data-tab="trend"><span class="ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4v16h16"/><path d="M8 15l3.5-4 3 3L20 7"/></svg></span><span>趨勢</span></button><button data-tab="hist"><span class="ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2.5"/><path d="M4 10h16M9 3v4M15 3v4"/></svg></span><span>歷史</span></button><button data-tab="food"><span class="ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16a8 8 0 0 1-16 0z"/><path d="M9 8c0-1.6 1.2-1.6 1.2-3.2M14 8c0-1.6 1.2-1.6 1.2-3.2"/></svg></span><span>食物庫</span></button><button data-tab="set"><span class="ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/><circle cx="9" cy="7" r="2.2" fill="var(--card)"/><circle cx="15.5" cy="12" r="2.2" fill="var(--card)"/><circle cx="8" cy="17" r="2.2" fill="var(--card)"/></svg></span><span>設定</span></button></nav><dialog id="mdlg"><b>新增餐點</b><span class="mut" id="mcnt"></span>
-<div class="tm" style="margin-top:6px"><label>日期<input id="mdate" type="date"></label><label>時間<input id="mtime" type="time"></label></div><p class="mut" id="mnote" style="margin:0 0 6px"></p>
+<nav id="nav" aria-label="主選單"><button data-tab="today"><span class="ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7"/><path d="M6 10v9h12v-9"/><path d="M10 19v-5h4v5"/></svg></span><span>今天</span></button><button data-tab="trend"><span class="ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4v16h16"/><path d="M8 15l3.5-4 3 3L20 7"/></svg></span><span>趨勢</span></button><button data-tab="hist"><span class="ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2.5"/><path d="M4 10h16M9 3v4M15 3v4"/></svg></span><span>歷史</span></button><button data-tab="food"><span class="ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16a8 8 0 0 1-16 0z"/><path d="M9 8c0-1.6 1.2-1.6 1.2-3.2M14 8c0-1.6 1.2-1.6 1.2-3.2"/></svg></span><span>食物庫</span></button><button data-tab="set"><span class="ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/><circle cx="9" cy="7" r="2.2" fill="var(--card)"/><circle cx="15.5" cy="12" r="2.2" fill="var(--card)"/><circle cx="8" cy="17" r="2.2" fill="var(--card)"/></svg></span><span>設定</span></button></nav><dialog id="gdlg"><b>補登哪一天的照片？</b>
+<div class="dp" id="gdp"><div class="row nav"><button class="alt" data-dd="-1" aria-label="前一天">‹</button><b class="dl"></b><button class="alt" data-dd="1" aria-label="後一天">›</button></div>
+<div class="row" style="margin-bottom:4px"><button class="alt sm" data-dset="0">今天</button><button class="alt sm" data-dset="1">昨天</button><button class="alt sm" data-dset="2">前天</button></div></div>
+<input id="gdate" type="date" aria-label="自選日期" style="margin-top:6px">
+<label style="display:block;margin:4px 0"><input type="checkbox" id="guse">改用照片檔案的時間來判斷日期（不一定準確）</label>
+<p class="mut" style="margin:4px 0">選好日期後會開啟相簿；每張照片之後仍可個別修改日期與時間。</p>
+<div class="row"><button id="ggo">選擇照片</button><button class="alt" id="gx">取消</button></div></dialog>
+<dialog id="mdlg"><b>新增餐點</b><span class="mut" id="mcnt"></span>
+<p class="mut" style="margin:8px 0 2px">這餐的日期</p><div class="dp" id="mdp"><div class="row nav"><button class="alt" data-dd="-1" aria-label="前一天">‹</button><b class="dl"></b><button class="alt" data-dd="1" aria-label="後一天">›</button></div>
+<div class="row" style="margin-bottom:4px"><button class="alt sm" data-dset="0">今天</button><button class="alt sm" data-dset="1">昨天</button><button class="alt sm" data-dset="2">前天</button></div></div>
+<div class="tm" style="margin-top:6px"><label>或自選日期<input id="mdate" type="date"></label><label>時間<input id="mtime" type="time"></label></div>
+<div class="row" id="mtp" style="margin:0 0 4px"><button class="alt sm" data-tm="08:00">早餐</button><button class="alt sm" data-tm="12:00">午餐</button><button class="alt sm" data-tm="15:30">點心</button><button class="alt sm" data-tm="18:30">晚餐</button><button class="alt sm" data-tm="21:30">宵夜</button></div><p class="mut" id="mnote" style="margin:0 0 6px"></p>
 <img id="mpv" alt="餐點照片" hidden style="width:100%;max-height:180px;object-fit:cover;border-radius:10px;margin:8px 0">
 <label>補充說明（選填，讓 AI 判斷更準）<textarea id="mdesc" rows="3" placeholder="例如：雞腿便當，飯吃一半，沒吃雞皮，加一份青菜"></textarea></label>
 <b style="font-size:14px">從食物庫加入</b>
@@ -201,10 +224,11 @@ async function ai(content,system,max=1500){
   return j.content.map(c=>c.text||'').join('');
 }
 
-const shrink=f=>new Promise(r=>{const i=new Image();i.onload=()=>{const m=640/Math.max(i.width,i.height,640),c=document.createElement('canvas');
-  c.width=i.width*m;c.height=i.height*m;c.getContext('2d').drawImage(i,0,0,c.width,c.height);r(c.toDataURL('image/jpeg',.6))};i.src=URL.createObjectURL(f)});
+const shrink=f=>new Promise((ok,no)=>{const u=URL.createObjectURL(f),i=new Image();
+  i.onload=()=>{const m=640/Math.max(i.width,i.height,640),c=document.createElement('canvas');c.width=Math.max(1,i.width*m);c.height=Math.max(1,i.height*m);c.getContext('2d').drawImage(i,0,0,c.width,c.height);URL.revokeObjectURL(u);ok(c.toDataURL('image/jpeg',.6))};
+  i.onerror=()=>{URL.revokeObjectURL(u);no(Error('無法讀取這張照片，可能是不支援的格式（例如 HEIC）'))};i.src=u});
 
-$('#cam').onchange=async e=>{const f=e.target.files[0];if(!f)return;openMeal(await shrink(f));e.target.value=''};
+$('#cam').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;try{openMeal(await shrink(f))}catch(err){toast(err.message)}};
 
 function digest(n){
   const out=[];
@@ -248,7 +272,7 @@ function render(){
 const idb=new Promise((ok,no)=>{const r=indexedDB.open('dc_img',1);r.onupgradeneeded=()=>r.result.createObjectStore('i');r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)});
 const tx=async(mode,fn)=>{const d=await idb;return new Promise((ok,no)=>{const q=fn(d.transaction('i',mode).objectStore('i'));q.onsuccess=()=>ok(q.result);q.onerror=()=>no(q.error)})};
 const putImg=(k,v)=>tx('readwrite',s=>s.put(v,k)),getImg=k=>tx('readonly',s=>s.get(k)),delImg=k=>tx('readwrite',s=>s.delete(k));
-function loadImgs(){document.querySelectorAll('img[data-img]').forEach(async e=>{const id=e.dataset.img;if(id&&!e.getAttribute('src')){const v=await getImg(id).catch(()=>null);if(v)e.src=v}})}
+function loadImgs(){document.querySelectorAll('img[data-img]').forEach(async e=>{const id=e.dataset.img;if(id&&!e.getAttribute('src')){const v=await getImg(id).catch(()=>null);if(v)e.src=v;else{e.alt='照片載入失敗';e.style.visibility='visible'}}})}
 (async()=>{let ch=0;for(const d of Object.values(db.days))for(const m of d.meals)if(m.img){m.imgId='i'+Math.random().toString(36).slice(2);await putImg(m.imgId,m.img);delete m.img;ch=1}if(ch){save();render()}})();
 
 let hs={tab:'cal',ym:today().slice(0,7),sel:null,ry:+today().slice(0,4),rf:'week',rn:20},tr=30;
@@ -373,24 +397,41 @@ function renderMd(){
   updSum();
 }
 var mq=[];
+function jumpTo(k){hs.tab='cal';hs.ym=k.slice(0,7);hs.sel=k;renderHist();showTab('hist')}
 const nowT=()=>new Date().toTimeString().slice(0,5);
 function nextMeal(){const n=mq.shift();if(n)openMeal(n.img,n.d,n.t,mq.length,n.note)}
 function openMeal(img,d,t,left,note){
   md={img,items:[]};$('#mdesc').value='';$('#msq').value='';$('#mdate').max=today();$('#mdate').value=d||today();$('#mtime').value=t||nowT();
-  $('#mcnt').textContent=left?`　（還有 ${left} 張待處理）`:'';$('#mnote').textContent=note||'';const pv=$('#mpv');pv.hidden=!img;if(img)pv.src=img;
+  $('#mdp')._upd();$('#mcnt').textContent=left?`　（還有 ${left} 張待處理）`:'';$('#mnote').textContent=note||'';const pv=$('#mpv');pv.hidden=!img;if(img)pv.src=img;
   renderMd();if(!$('#mdlg').open)$('#mdlg').showModal();document.activeElement?.blur();
 }
-$('#msq').oninput=renderMd;$('#mdesc').oninput=updSum;$('#gal').onchange=async e=>{
+$('#msq').oninput=renderMd;$('#mdesc').oninput=updSum;function dpInit(el,inp){
+  const upd=()=>{const d=inp.value;el.querySelector('.dl').textContent=d?`${d}（週${'日一二三四五六'[new Date(d+'T00:00').getDay()]}）`:'請選日期'};
+  const set=v=>{if(v>today())v=today();inp.value=v;upd()};
+  el.onclick=e=>{const b=e.target.closest('button');if(!b)return;
+    if(b.dataset.dd){const d=new Date((inp.value||today())+'T00:00');d.setDate(d.getDate()+ +b.dataset.dd);set(ymd(d))}
+    else if(b.dataset.dset!==undefined){const d=new Date();d.setDate(d.getDate()-+b.dataset.dset);set(ymd(d))}};
+  inp.max=today();inp.addEventListener('input',upd);inp.addEventListener('change',upd);el._upd=upd;
+}
+dpInit($('#mdp'),$('#mdate'));dpInit($('#gdp'),$('#gdate'));
+$('#mtp').onclick=e=>{const b=e.target.closest('button');if(b)$('#mtime').value=b.dataset.tm};
+var gdate=today(),guse=false;
+$('#galb').onclick=()=>{$('#gdate').value=today();$('#gdp')._upd();$('#guse').checked=false;$('#gdlg').showModal();document.activeElement?.blur()};
+$('#gx').onclick=()=>$('#gdlg').close();
+$('#ggo').onclick=()=>{gdate=$('#gdate').value||today();guse=$('#guse').checked;$('#gdlg').close();$('#gal').click()};
+$('#gal').onchange=async e=>{
   const fs=[...e.target.files];e.target.value='';if(!fs.length)return;toast('讀取照片中…');
-  const L=[];for(const f of fs){let lm=f.lastModified?new Date(f.lastModified):new Date();if(ymd(lm)>today())lm=new Date();
-    L.push({img:await shrink(f),d:ymd(lm),t:lm.toTimeString().slice(0,5),note:'日期與時間已依照片檔案時間預填，請確認是否正確。'})}
+  const L=[];let bad=0,why='';for(const f of fs){let lm=f.lastModified?new Date(f.lastModified):new Date();if(ymd(lm)>today())lm=new Date();
+    try{L.push({img:await shrink(f),d:guse?ymd(lm):gdate,t:lm.toTimeString().slice(0,5),note:guse?'日期與時間已依照片檔案時間預填，請確認是否正確。':`已套用你選的日期 ${gdate}，時間請確認。`})}catch(err){bad++;why=err.message}}
+  if(!L.length)return toast(why||'沒有可用的照片');
+  if(bad)toast(`有 ${bad} 張照片無法讀取，已略過`);
   L.sort((a,b)=>(a.d+a.t).localeCompare(b.d+b.t));mq=L;nextMeal();
 };
 var attT=null;
 const bindAtt=el=>el.querySelectorAll('[data-att]').forEach(b=>b.onclick=()=>{attT=b.dataset.att.split('|');$('#att').click()});
 $('#att').onchange=async e=>{
   const f=e.target.files[0];e.target.value='';if(!f||!attT)return;const m=db.days[attT[0]]?.meals[+attT[1]];if(!m)return;
-  m.imgId='i'+Date.now().toString(36);await putImg(m.imgId,await shrink(f));save();render();toast('已補上照片');
+  try{const im=await shrink(f);m.imgId='i'+Date.now().toString(36);await putImg(m.imgId,im);save();render();toast('已補上照片')}catch(err){toast(err.message)}
 };
 $('#mx').onclick=()=>{$('#mdlg').close();nextMeal()};$('#mdlg').oncancel=()=>setTimeout(nextMeal);$('#addm').onclick=()=>openMeal(null);
 $('#mgo').onclick=async()=>{
@@ -403,8 +444,8 @@ $('#mgo').onclick=async()=>{
   $('#mdlg').close();
   if(img){m.imgId='i'+Date.now().toString(36);await putImg(m.imgId,img)}
   day(dkey).meals.push(m);day(dkey).meals.sort((a,b)=>a.t.localeCompare(b.t));
-  if(!img&&!desc){m.ai=fromLib();save();render();toast(dkey===today()?'已加入':`已加入 ${dkey}`);return}
-  busy.add(m);save();render();toast(dkey===today()?'AI 分析中…':`已加入 ${dkey}，AI 分析中…`);nextMeal();
+  if(!img&&!desc){m.ai=fromLib();save();render();toast(dkey===today()?'已加入':`已加入 ${dkey}`);if(dkey!==today())jumpTo(dkey);return}
+  busy.add(m);save();render();toast(dkey===today()?'AI 分析中…':`已加入 ${dkey}，AI 分析中…`);const more=mq.length;nextMeal();if(!more&&dkey!==today())jumpTo(dkey);
   try{
     const parts=[];if(img)parts.push({type:'image',source:{type:'base64',media_type:'image/jpeg',data:img.split(',')[1]}});
     parts.push({type:'text',text:(img?'請辨識這餐並估算份量與熱量。':'請根據以下說明估算這餐的份量與熱量。')
@@ -431,47 +472,85 @@ function showTab(t){document.querySelectorAll('.tab').forEach(e=>e.hidden=e.id!=
 $('#nav').onclick=e=>{const b=e.target.closest('button');if(b)showTab(b.dataset.tab)};showTab('today');
 $('#sync').onclick=()=>sync(+$('#sr').value);render();
 
-var wc=null,cc=null;
+var wc=null,cc=null,wMore=false;
+function wkStart(k){const d=new Date(k+'T00:00');d.setDate(d.getDate()-(d.getDay()+6)%7);return ymd(d)}
+function addD(k,n){const d=new Date(k+'T00:00');d.setDate(d.getDate()+n);return ymd(d)}
+function linSlope(p){const mx=avg(p.map(q=>q[0])),my=avg(p.map(q=>q[1]));let a=0,b=0;p.forEach(q=>{a+=(q[0]-mx)*(q[1]-my);b+=(q[0]-mx)**2});return b?a/b:0}
 function drawCharts(){
   document.querySelectorAll('#trs button').forEach(b=>b.classList.toggle('on',b.dataset.n==String(tr)));
   const md=k=>(+k.slice(5,7))+'/'+(+k.slice(8)),N=trN(),ks=[...Array(N)].map((_,i)=>ymd(new Date(Date.now()-(N-1-i)*864e5)));
-  // ===== 體重 =====
-  const W=340,H=190,L=38,R=12,T=14,B=26,pts=ks.map((k,i)=>[i,db.days[k]?.weight]).filter(p=>p[1]),wt=db.p.wt,el=$('#chart');
-  if(pts.length<2){el.innerHTML='<text x="10" y="90" font-size="13" fill="var(--mut)">同步體重資料後會顯示趨勢</text>';$('#wsum').textContent='還沒有足夠的體重資料。';wc=null}
+  const all=Object.keys(db.days).filter(k=>db.days[k].weight).sort(),cur=all.length?db.days[all.at(-1)].weight:null,p0=db.p.w0||(all.length?db.days[all[0]].weight:null),wt=db.p.wt;
+  // ===== 目標進度 =====
+  let h='';
+  if(cur!=null&&p0&&wt){
+    const tot=p0-wt,done=p0-cur,pct=tot>0?Math.max(0,Math.min(100,done/tot*100)):0,msg=[];
+    h=`<div class="bigrow"><div><span class="mut">目前體重</span><br><span class="pu"><b class="bn">${cur}</b> kg</span></div><div style="text-align:right"><span class="mut">${done>=0?'已經瘦了':'比起點重了'}</span><br><span class="pu"><b class="bn">${Math.abs(done).toFixed(1)}</b> kg</span></div></div>
+    <div class="pbar" role="progressbar" aria-valuenow="${Math.round(pct)}" aria-valuemin="0" aria-valuemax="100"><i style="width:${pct}%"></i></div>
+    <div class="bigrow"><span class="mut">起點 ${p0}</span><span class="mut">${tot>0?`完成 ${Math.round(pct)}%`:''}</span><span class="mut">目標 ${wt}</span></div>`;
+    msg.push(cur>wt?`距離目標還差 <b>${(cur-wt).toFixed(1)} 公斤</b>。`:'<b>已經達到目標體重！</b>');
+    const rec=all.filter(k=>k>=ymd(new Date(Date.now()-28*864e5)));
+    if(cur>wt){
+      if(rec.length>=5){const t0=new Date(rec[0]),sl=linSlope(rec.map(k=>[(new Date(k)-t0)/864e5,db.days[k].weight])),wr=-sl*7;
+        if(sl<-0.005){msg.push(`最近 4 週平均每週瘦 ${wr.toFixed(2)} 公斤，照這個速度大約 <b>${ymd(new Date(Date.now()+(cur-wt)/-sl*864e5))}</b> 達標（粗估）。`)}
+        else msg.push('最近 4 週體重沒有明顯下降。');
+        if(db.p.dt&&db.p.dt>today()){const left=(new Date(db.p.dt)-Date.now())/864e5/7,need=(cur-wt)/Math.max(left,.5);
+          msg.push(`要在 ${db.p.dt} 前達標，每週需要瘦約 ${need.toFixed(2)} 公斤；`+(wr>=need?'你目前的速度跟得上。':'你目前的速度稍慢，可參考 AI 檢討的建議。'))}
+      }else msg.push('最近 4 週的體重紀錄還不夠多，累積後會顯示預估達標日。');
+    }
+    h+=`<p style="margin:10px 0 0">${msg.join('<br>')}</p>`;
+  }else h='<p class="mut" style="margin:0">到「設定」填入起始體重與目標體重，並同步體重資料後，這裡會顯示你的進度。</p>';
+  $('#prog').innerHTML=h;
+  // ===== 體重走勢（只畫一條平滑線）=====
+  const W=340,H=170,L=34,R=14,T=14,B=24,pts=ks.map((k,i)=>[i,db.days[k]?.weight]).filter(p=>p[1]),el=$('#chart');
+  if(pts.length<2){el.innerHTML='<text x="10" y="80" font-size="13" fill="var(--mut)">需要至少 2 筆體重資料才會畫出走勢</text>';$('#wsum').textContent='';wc=null}
   else{
-    const vs=pts.map(p=>p[1]).concat(wt||[]),mn=Math.min(...vs)-.3,mx_=Math.max(...vs)+.3,stp=(mx_-mn)<=4?1:(mx_-mn)<=10?2:(mx_-mn)<=20?5:10,lo=Math.floor(mn/stp)*stp,hi=Math.ceil(mx_/stp)*stp,fm=v=>Math.round(v);
+    const ma=pts.map(p=>{const w=pts.filter(q=>q[0]<=p[0]&&q[0]>p[0]-7);return[p[0],avg(w.map(q=>q[1]))]}),a=ma[0],z=ma.at(-1),vs=ma.map(p=>p[1]).concat(wt||[]);
+    const mn=Math.min(...vs)-.3,mx_=Math.max(...vs)+.3,stp=(mx_-mn)<=4?1:(mx_-mn)<=10?2:(mx_-mn)<=20?5:10,lo=Math.floor(mn/stp)*stp,hi=Math.ceil(mx_/stp)*stp;
     const x=i=>L+i*(W-L-R)/Math.max(N-1,1),y=v=>H-B-(v-lo)/(hi-lo)*(H-B-T);
-    const ma=pts.map(p=>{const w=pts.filter(q=>q[0]<=p[0]&&q[0]>p[0]-7);return[p[0],w.reduce((a,q)=>a+q[1],0)/w.length]});
-    const path=ma.map((p,j)=>(j?'L':'M')+x(p[0]).toFixed(1)+' '+y(p[1]).toFixed(1)).join(''),a=ma[0],z=ma.at(-1);
-    let g=Array.from({length:Math.round((hi-lo)/stp)+1},(_,i)=>lo+i*stp).map(v=>`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--ln)"/><text x="${L-5}" y="${y(v)+3}" text-anchor="end" font-size="10" fill="var(--mut)">${fm(v)}</text>`).join('');
-    if(wt)g+=`<line x1="${L}" x2="${W-R}" y1="${y(wt)}" y2="${y(wt)}" stroke="var(--warn)" stroke-dasharray="4"/><text x="${W-R}" y="${y(wt)-4}" text-anchor="end" font-size="11" fill="var(--warn)">目標 ${wt}</text>`;
-    if(pts.length<=120)g+=pts.map(p=>`<circle cx="${x(p[0])}" cy="${y(p[1])}" r="2.5" fill="var(--mut)"/>`).join('');
-    g+=`<path d="${path}" fill="none" stroke="var(--ac)" stroke-width="2.5"/>`
-      +`<circle cx="${x(a[0])}" cy="${y(a[1])}" r="4" fill="var(--ac)"/><text x="${x(a[0])+6}" y="${y(a[1])-8}" font-size="11" font-weight="600" fill="var(--ink)">${a[1].toFixed(1)}</text>`
-      +`<circle cx="${x(z[0])}" cy="${y(z[1])}" r="4" fill="var(--ac)"/><text x="${x(z[0])-6}" y="${y(z[1])-8}" text-anchor="end" font-size="11" font-weight="600" fill="var(--ink)">${z[1].toFixed(1)}</text>`
-      +[[0,'start'],[Math.floor((N-1)/2),'middle'],[N-1,'end']].map(([i,an])=>`<text x="${x(i)}" y="${H-8}" text-anchor="${an}" font-size="10" fill="var(--mut)">${md(ks[i])}</text>`).join('');
+    let g=Array.from({length:Math.round((hi-lo)/stp)+1},(_,i)=>lo+i*stp).map(v=>`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--ln)"/><text x="${L-5}" y="${y(v)+3}" text-anchor="end" font-size="10" fill="var(--mut)">${Math.round(v)}</text>`).join('');
+    if(wt)g+=`<line x1="${L}" x2="${W-R}" y1="${y(wt)}" y2="${y(wt)}" stroke="var(--warn)" stroke-width="1.5" stroke-dasharray="5 4"/><text x="${L+4}" y="${y(wt)-5}" font-size="11" fill="var(--warn)" font-weight="600">目標 ${wt}</text>`;
+    g+=`<path d="${ma.map((p,j)=>(j?'L':'M')+x(p[0]).toFixed(1)+' '+y(p[1]).toFixed(1)).join('')}" fill="none" stroke="var(--ac)" stroke-width="3" stroke-linejoin="round"/>`
+      +`<circle cx="${x(a[0])}" cy="${y(a[1])}" r="4.5" fill="var(--ac)"/><text x="${x(a[0])+4}" y="${y(a[1])-9}" font-size="13" font-weight="700" fill="var(--ink)">${a[1].toFixed(1)}</text>`
+      +`<circle cx="${x(z[0])}" cy="${y(z[1])}" r="4.5" fill="var(--ac)"/><text x="${x(z[0])-4}" y="${y(z[1])-9}" text-anchor="end" font-size="13" font-weight="700" fill="var(--ink)">${z[1].toFixed(1)}</text>`
+      +[[0,'start'],[Math.floor((N-1)/2),'middle'],[N-1,'end']].map(([i,an])=>`<text x="${x(i)}" y="${H-7}" text-anchor="${an}" font-size="10" fill="var(--mut)">${md(ks[i])}</text>`).join('');
     el.innerHTML=g;wc={x,ks,N,L,R,W,pts};
-    const first=pts[0][1],last=pts.at(-1)[1],span=pts.at(-1)[0]-pts[0][0];let s=`目前 ${last}kg｜這段期間 ${chg(last-first)}`;
-    s+=wt?`｜距離目標 ${(last-wt).toFixed(1)}kg`:'｜尚未設定目標';
-    if(wt&&last>wt&&first>last&&span>=7){const eta=new Date(Date.now()+(last-wt)/((first-last)/span)*864e5);s+=`\n照這段期間的速度，粗估約 ${ymd(eta)} 達標`}
-    $('#wsum').textContent=s;
+    $('#wsum').innerHTML=`${md(ks[0])} → ${md(ks.at(-1))}：<b>${a[1].toFixed(1)} → ${z[1].toFixed(1)} kg</b>（${chg(z[1]-a[1])}）`;
   }
-  $('#wrd').textContent='點圖表可查看當天的體重';
-  // ===== 熱量 =====
+  $('#wrd').textContent='點圖上任一處，可看當天實際量到的體重';
+  // ===== 每週／每月平均 =====
+  const mon=N>100,G={};
+  all.filter(k=>k>=ks[0]).forEach(k=>{(G[mon?k.slice(0,7):wkStart(k)]??=[]).push(db.days[k].weight)});
+  const rows=Object.entries(G).sort().map(([g,v])=>({g,a:avg(v)}));rows.forEach((r,i)=>r.d=i?r.a-rows[i-1].a:null);
+  $('#plt').textContent=mon?'每月平均體重':'每週平均體重';
+  if(rows.length){
+    const mnv=Math.min(...rows.map(r=>r.a)),mxv=Math.max(...rows.map(r=>r.a)),show=(wMore?rows:rows.slice(-6)).slice().reverse();
+    $('#wlist').innerHTML=show.map(r=>`<div class="wr"><span>${mon?r.g:md(r.g)+'–'+md(addD(r.g,6))}</span><span class="wb"><i style="width:${rows.length>1?30+70*(r.a-mnv)/Math.max(mxv-mnv,.1):100}%"></i></span><b>${r.a.toFixed(1)}</b><span class="${r.d==null?'':r.d<=0?'dn':'up'}">${r.d==null?'':(r.d<=0?'▼ ':'▲ ')+Math.abs(r.d).toFixed(1)}</span></div>`).join('')
+      +(rows.length>6?`<button class="alt sm" id="wmore" style="margin-top:8px">${wMore?'只看最近 6 筆':`顯示全部 ${rows.length} 筆`}</button>`:'');
+    const b=$('#wmore');if(b)b.onclick=()=>{wMore=!wMore;drawCharts()};
+  }else $('#wlist').innerHTML='<p class="mut">還沒有體重資料</p>';
+  // ===== 每天吃進與消耗的差 =====
   const k2=[...Array(14)].map((_,i)=>ymd(new Date(Date.now()-(13-i)*864e5))),dd=k2.map(k=>db.days[k]||{}),ins=dd.map(d=>kin(d)),outs=dd.map(d=>d.kcalOut||0);
-  const top=Math.max(500,Math.ceil(Math.max(...ins,...outs)/500)*500),H2=150,B2=22,T2=10,bw=(W-L-R)/14,yy=v=>H2-B2-v/top*(H2-B2-T2);
-  $('#cal').innerHTML=[0,top/2,top].map(v=>`<line x1="${L}" x2="${W-R}" y1="${yy(v)}" y2="${yy(v)}" stroke="var(--ln)"/><text x="${L-5}" y="${yy(v)+3}" text-anchor="end" font-size="10" fill="var(--mut)">${v}</text>`).join('')
-    +k2.map((k,i)=>{const x0=L+i*bw;return`<rect x="${x0+1}" y="${yy(ins[i])}" width="${bw/2-1}" height="${H2-B2-(yy(ins[i])-0)+0}" fill="var(--ac)"/><rect x="${x0+bw/2}" y="${yy(outs[i])}" width="${bw/2-1}" height="${H2-B2-yy(outs[i])}" fill="var(--mut)" opacity=".6"/>`+(i%2===0?`<text x="${x0+bw/2}" y="${H2-8}" text-anchor="middle" font-size="9" fill="var(--mut)">${+k.slice(8)}</text>`:'')}).join('');
-  const both=k2.map((k,i)=>[ins[i],outs[i]]).filter(p=>p[0]&&p[1]);
-  if(both.length){const ai_=avg(both.map(p=>p[0])),ao=avg(both.map(p=>p[1])),df=ao-ai_;
-    $('#csum').textContent=`近 14 天（有完整紀錄 ${both.length} 天）：平均吃進 ${Math.round(ai_)} kcal、消耗 ${Math.round(ao)} kcal\n平均每天熱量${df>=0?'赤字':'盈餘'} ${Math.abs(Math.round(df))} kcal，粗估每週約${df>=0?'減':'增'} ${(Math.abs(df)*7/7700).toFixed(2)}kg`}
-  else $('#csum').textContent='拍照記錄飲食並同步消耗熱量後，這裡會顯示每天吃進與消耗的差距。';
-  cc={k2,ins,outs,L,R,W};$('#crd').textContent='點圖表可查看當天的熱量';
+  const net=ins.map((v,i)=>v&&outs[i]?outs[i]-v:null),vals=net.filter(v=>v!=null);
+  const H2=200,T2=24,B2=34,df=vals.some(v=>v<0)?1:.3,ph=H2-T2-B2,upH=ph/(1+df),dnH=ph-upH,y0=T2+upH,top=Math.max(500,Math.ceil(Math.max(0,...vals.map(Math.abs))/250)*250),bw=(W-L-R)/14;
+  let c=`<line x1="${L}" x2="${W-R}" y1="${y0}" y2="${y0}" stroke="var(--ink)" stroke-width="1"/><text x="${L-5}" y="${y0+3}" text-anchor="end" font-size="10" fill="var(--mut)">0</text>`
+   +`<text x="${L-5}" y="${T2+3}" text-anchor="end" font-size="10" fill="var(--mut)">${top}</text>${df===1?`<text x="${L-5}" y="${H2-B2+3}" text-anchor="end" font-size="10" fill="var(--mut)">-${top}</text>`:''}`
+   +`<text x="${L}" y="12" font-size="11" fill="var(--ac)" font-weight="600">▲ 吃得比消耗少（有瘦的機會）</text><text x="${L}" y="${H2-B2+16}" font-size="11" fill="var(--warn)" font-weight="600">▼ 吃得比消耗多（往下長）</text>`;
+  k2.forEach((k,i)=>{const x0=L+i*bw+bw*.15,w=bw*.7,v=net[i];
+    if(v==null)c+=`<circle cx="${x0+w/2}" cy="${y0}" r="2.5" fill="var(--mut)" opacity=".5"/>`;
+    else{const hh=Math.max(1,Math.min(Math.abs(v)/top*upH,v>=0?upH:dnH));
+      c+=`<rect x="${x0}" y="${v>=0?y0-hh:y0}" width="${w}" height="${hh}" rx="2" fill="${v>=0?'var(--ac)':'var(--warn)'}"/><text x="${x0+w/2}" y="${v>=0?y0-hh-3:y0+hh+10}" text-anchor="middle" font-size="9" fill="var(--ink)">${Math.round(Math.abs(v))}</text>`}
+    c+=`<text x="${x0+w/2}" y="${H2-6}" text-anchor="middle" font-size="9" fill="var(--mut)">${+k.slice(8)}</text>`});
+  $('#cal').innerHTML=c;
+  const both=vals.length;
+  if(both){const m=avg(vals),ai_=avg(k2.map((k,i)=>net[i]!=null?ins[i]:null).filter(v=>v!=null)),ao=avg(k2.map((k,i)=>net[i]!=null?outs[i]:null).filter(v=>v!=null));
+    $('#csum').innerHTML=`近 14 天有 ${both} 天有完整紀錄：平均每天吃 ${Math.round(ai_)}、消耗 ${Math.round(ao)} 大卡。<br><b>平均每天${m>=0?'少吃':'多吃'} ${Math.abs(Math.round(m))} 大卡</b>，粗估每週約${m>=0?'瘦':'胖'} ${(Math.abs(m)*7/7700).toFixed(2)} 公斤。`}
+  else $('#csum').textContent='記錄飲食並同步消耗熱量後，這裡會顯示你每天吃進與消耗的差距。';
+  cc={k2,ins,outs,L,R,W};$('#crd').textContent='點圖上任一天，可看當天的數字';
 }
 $('#chart').onclick=e=>{if(!wc)return;const r=e.currentTarget.getBoundingClientRect(),vx=(e.clientX-r.left)/r.width*wc.W,i=Math.round((vx-wc.L)/(wc.W-wc.L-wc.R)*(wc.N-1));
-  const p=wc.pts.reduce((m,q)=>Math.abs(q[0]-i)<Math.abs(m[0]-i)?q:m);$('#wrd').textContent=`${wc.ks[p[0]]}　體重 ${p[1]} kg`};
+  const p=wc.pts.reduce((m,q)=>Math.abs(q[0]-i)<Math.abs(m[0]-i)?q:m);$('#wrd').textContent=`${wc.ks[p[0]]}　量到的體重 ${p[1]} kg`};
 $('#cal').onclick=e=>{if(!cc)return;const r=e.currentTarget.getBoundingClientRect(),vx=(e.clientX-r.left)/r.width*cc.W,i=Math.max(0,Math.min(13,Math.floor((vx-cc.L)/((cc.W-cc.L-cc.R)/14))));
-  const a=cc.ins[i],o=cc.outs[i];$('#crd').textContent=`${cc.k2[i]}　攝取 ${a||'-'}｜消耗 ${o||'-'} kcal${a&&o?`｜${o>=a?'赤字':'盈餘'} ${Math.abs(o-a)}`:''}`};
+  const a=cc.ins[i],o=cc.outs[i];$('#crd').textContent=a&&o?`${cc.k2[i]}　吃 ${a}、消耗 ${o} 大卡 → ${o>=a?'少吃':'多吃'} ${Math.abs(o-a)} 大卡`:`${cc.k2[i]}　缺少${a?'':'飲食'}${!a&&!o?'與':''}${o?'':'消耗'}紀錄`};
 async function remind(){
   const L=window.Capacitor?.Plugins?.LocalNotifications;if(!L)return toast('請在 Android App 內使用');
   const r=await L.requestPermissions();if(r.display!=='granted')return toast('請允許通知權限');
