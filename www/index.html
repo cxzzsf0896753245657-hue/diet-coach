@@ -5,9 +5,9 @@
 <style>
 :root{--bg:#f2f5f1;--ink:#1c2b26;--mut:#68776f;--card:#fff;--ac:#2f7d5b;--warn:#c8841a;--ln:#dde5df}
 @media(prefers-color-scheme:dark){:root{--bg:#121a17;--ink:#e6efe9;--mut:#93a39a;--card:#1a2420;--ac:#5cc496;--warn:#e3a84b;--ln:#2a3832}}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,"Noto Sans TC",sans-serif;padding:env(safe-area-inset-top) 0 calc(env(safe-area-inset-bottom) + 12px)}
-main{max-width:560px;margin:auto;padding:16px}
-h1{font-size:22px;margin:4px 0 12px}h2{font-size:17px;margin:22px 0 8px}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,"Noto Sans TC",sans-serif;padding:env(safe-area-inset-top) 0 0}
+main{max-width:560px;margin:auto;padding:12px 16px 96px}
+h1{font-size:20px;margin:0}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.sm{padding:6px 14px;font-size:14px}h2{font-size:17px;margin:22px 0 8px}
 .card{background:var(--card);border:1px solid var(--ln);border-radius:12px;padding:14px;margin-bottom:10px}
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;text-align:center}
 .stats b{display:block;font-size:20px}.stats span,.mut{color:var(--mut);font-size:13px}
@@ -24,22 +24,35 @@ summary{cursor:pointer;font-size:14px}
 .li{display:grid;gap:8px;width:100%;text-align:left;background:var(--card);color:var(--ink);border:1px solid var(--ln);border-radius:10px;margin-bottom:6px;padding:10px;font-size:14px}
 svg{touch-action:manipulation;cursor:pointer}.lg{display:inline-block;width:10px;height:10px;border-radius:2px;margin:0 4px 0 8px;vertical-align:middle}
 #mdlg{width:min(92vw,520px)}textarea{resize:vertical}
+.hx{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:14px;margin:6px 0}.hx span{color:var(--mut)}.hx b{color:var(--ink);font-weight:600}
+.tab #meals .card{padding:10px;margin-bottom:8px}#meals .meal img{width:52px;height:52px}
+.act{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0 4px}.big{padding:14px 8px;text-align:center;font-size:16px;display:block}
+#nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--card);border-top:1px solid var(--ln);padding-bottom:env(safe-area-inset-bottom);z-index:5}
+#nav button{flex:1;background:transparent;color:var(--mut);border-radius:0;padding:8px 0 6px;font-size:12px;line-height:1.3}#nav button{display:flex;flex-direction:column;align-items:center}#nav .ic{display:flex;align-items:center;justify-content:center;width:56px;height:30px;border-radius:15px;margin-bottom:2px;transition:background .15s}#nav button.on{color:var(--ac);font-weight:600}#nav button.on .ic{background:color-mix(in srgb,var(--ac) 18%,transparent)}
+details.card summary{padding:2px 0}details.card[open] summary{margin-bottom:8px}.tab h2:first-child{margin-top:4px}
 img:not([src]){visibility:hidden}
 dialog{background:var(--card);color:var(--ink);border:1px solid var(--ln);border-radius:12px;max-width:90vw;max-height:80vh;overflow:auto}
 button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--warn);outline-offset:2px}
 .row{display:flex;gap:8px;flex-wrap:wrap}
 input,textarea,select{font:inherit;width:100%;padding:9px;border-radius:8px;border:1px solid var(--ln);background:var(--bg);color:var(--ink);margin:4px 0 10px}
 .meal{display:flex;gap:10px;align-items:center}.meal img{width:64px;height:64px;object-fit:cover;border-radius:8px}
-.rv{white-space:pre-wrap}#toast{position:fixed;left:16px;right:16px;bottom:20px;background:var(--ink);color:var(--bg);padding:10px 14px;border-radius:10px;display:none}
+.rv{white-space:pre-wrap}#toast{position:fixed;left:16px;right:16px;bottom:calc(76px + env(safe-area-inset-bottom));z-index:9;background:var(--ink);color:var(--bg);padding:10px 14px;border-radius:10px;display:none}
 </style></head><body><main>
-<h1>減重教練</h1>
-<div class="card"><div class="stats" id="stats"></div>
-<p class="mut" id="goal"></p></div>
-<div class="row"><button id="sync">同步 Health Connect</button>
-<label class="btn alt">拍照記錄飲食<input id="cam" type="file" accept="image/*" capture="environment" hidden></label>
-<button class="alt" id="addm">文字／食物庫記錄</button></div>
+<header class="top"><h1 id="ttl">今天</h1><button class="alt sm" id="sync">同步</button></header>
 
-<h2>趨勢</h2><div class="card"><div class="seg" id="trs" style="margin-bottom:8px"><button data-n="30">30 天</button><button data-n="90">90 天</button><button data-n="365">1 年</button><button data-n="all">全部</button></div>
+<section class="tab" id="t-today">
+<div class="card"><div class="stats" id="stats"></div>
+<p class="mut" id="goal"></p>
+<details><summary class="mut">更多健康數據（今天）</summary><div id="hxd"></div></details></div>
+<div class="act"><label class="btn big">拍照記錄飲食<input id="cam" type="file" accept="image/*" capture="environment" hidden></label>
+<button class="alt big" id="addm">文字／食物庫記錄</button></div>
+<h2>今天的飲食</h2><div id="meals"></div>
+<h2>AI 教練</h2>
+<div class="row"><button class="alt" data-r="day">今日總結</button><button class="alt" data-r="week">本週檢討</button><button class="alt" data-r="month">本月檢討</button></div>
+<div id="reviews"></div>
+</section>
+
+<section class="tab" id="t-trend" hidden><div class="card"><div class="seg" id="trs" style="margin-bottom:8px"><button data-n="30">30 天</button><button data-n="90">90 天</button><button data-n="365">1 年</button><button data-n="all">全部</button></div>
 <b>體重變化</b>
 <p class="mut" id="wsum" style="white-space:pre-line;margin:2px 0 6px"></p>
 <svg id="chart" viewBox="0 0 340 190" width="100%" role="img" aria-label="體重趨勢圖"></svg>
@@ -49,20 +62,12 @@ input,textarea,select{font:inherit;width:100%;padding:9px;border-radius:8px;bord
 <p class="mut" id="csum" style="white-space:pre-line;margin:2px 0 6px"></p>
 <svg id="cal" viewBox="0 0 340 150" width="100%" role="img" aria-label="每日攝取與消耗熱量"></svg>
 <p class="mut" style="margin:2px 0"><span class="lg" style="background:var(--ac);margin-left:0"></span>攝取　<span class="lg" style="background:var(--mut);opacity:.6;margin-left:0"></span>消耗　（近 14 天，下方數字為日期）</p>
-<p class="mut" id="crd" style="min-height:1.6em;margin:2px 0"></p></div>
+<p class="mut" id="crd" style="min-height:1.6em;margin:2px 0"></p></div></section>
 
-<h2>今天的飲食</h2><div id="meals"></div>
+<section class="tab" id="t-hist" hidden><div class="seg" id="seg" style="margin-bottom:10px"><button data-t="cal">月曆</button><button data-t="yr">年度總覽</button><button data-t="rv">AI 檢討</button></div>
+<div id="hist"></div></section>
 
-<h2>AI 教練</h2>
-<div class="row"><button class="alt" data-r="day">今日總結</button><button class="alt" data-r="week">本週檢討</button><button class="alt" data-r="month">本月檢討</button></div>
-<div id="reviews"></div>
-
-<h2>歷史紀錄</h2>
-<div class="seg" id="seg" style="margin-bottom:10px"><button data-t="cal">月曆</button><button data-t="yr">年度總覽</button><button data-t="rv">AI 檢討</button></div>
-<div id="hist"></div>
-
-<h2>食物庫</h2>
-<div class="card" id="foodcard">
+<section class="tab" id="t-food" hidden><div class="card" id="foodcard">
 <input id="fq" placeholder="搜尋食物庫…">
 <div id="flist"></div>
 <h3>新增／編輯食物</h3>
@@ -70,28 +75,37 @@ input,textarea,select{font:inherit;width:100%;padding:9px;border-radius:8px;bord
 <label>份量說明<input id="fu" value="1份" placeholder="1碗、1個、100g"></label>
 <div class="tm"><label>熱量 kcal<input id="fk" type="number" inputmode="decimal"></label><label>蛋白質 g（選填）<input id="fp" type="number" inputmode="decimal"></label></div>
 <div class="row"><button id="fs">儲存</button><button class="alt" id="fa">AI 估算熱量</button><button class="alt" id="fd" hidden>刪除</button></div>
-</div>
+</div></section>
 
-<h2>設定</h2>
-<div class="card">
+<section class="tab" id="t-set" hidden>
+<details class="card" open><summary><b>我的目標</b></summary>
 <label>目前體重 (kg)<input id="w0" type="number" step="0.1"></label>
 <label>目標體重 (kg)<input id="wt" type="number" step="0.1"></label>
 <label>目標日期<input id="dt" type="date"></label>
 <label>身高 (cm)<input id="ht" type="number"></label>
+</details>
+<details class="card"><summary><b>AI 設定</b></summary>
 <label>AI 服務<select id="prov"><option value="gemini">Google Gemini（有免費額度）</option><option value="claude">Anthropic Claude（付費）</option></select></label>
 <label>Gemini API Key（只存在本機）<input id="gkey" type="password" autocomplete="off"></label>
 <label>Gemini 模型名稱（選填）<input id="gmodel" placeholder="gemini-3.1-flash-lite"></label>
 <label>Claude API Key（選填，付費）<input id="key" type="password" autocomplete="off"></label>
-<h3>提醒時間</h3>
+</details>
+<details class="card"><summary><b>提醒時間</b></summary>
 <label><input type="checkbox" id="rd" checked>每日記錄飲食與今日總結</label><input id="rdt" type="time" value="21:00">
 <label><input type="checkbox" id="rw" checked>每週檢討</label><div class="tm"><select id="rwd"><option value="1">週日</option><option value="2">週一</option><option value="3">週二</option><option value="4">週三</option><option value="5">週四</option><option value="6">週五</option><option value="7">週六</option></select><input id="rwt" type="time" value="20:00"></div>
 <label><input type="checkbox" id="rm" checked>每月檢討</label><div class="tm"><select id="rmd"><option value="1">1 日</option><option value="2">2 日</option><option value="3">3 日</option><option value="4">4 日</option><option value="5">5 日</option><option value="6">6 日</option><option value="7">7 日</option><option value="8">8 日</option><option value="9">9 日</option><option value="10">10 日</option><option value="11">11 日</option><option value="12">12 日</option><option value="13">13 日</option><option value="14">14 日</option><option value="15">15 日</option><option value="16">16 日</option><option value="17">17 日</option><option value="18">18 日</option><option value="19">19 日</option><option value="20">20 日</option><option value="21">21 日</option><option value="22">22 日</option><option value="23">23 日</option><option value="24">24 日</option><option value="25">25 日</option><option value="26">26 日</option><option value="27">27 日</option><option value="28">28 日</option></select><input id="rmt" type="time" value="20:00"></div>
-<div class="row"><button id="saveP">儲存設定</button><button id="remind" class="alt">套用提醒時間</button></div>
-<h3 style="margin-top:16px">備份與還原</h3>
+<button id="remind" class="alt">套用提醒時間</button></details>
+<details class="card"><summary><b>Health Connect 同步</b></summary>
+<label class="mut" style="display:flex;gap:8px;align-items:center;margin-top:8px">同步範圍<select id="sr" style="width:auto;margin:0"><option value="30">近 30 天</option><option value="90">近 90 天</option><option value="365">近 1 年</option></select></label>
+<details id="sd" style="margin-top:6px"><summary class="mut" id="ss"></summary><div class="mut" id="sl" style="font-size:13px"></div></details></details>
+<details class="card"><summary><b>備份與還原</b></summary>
 <select id="bkr"><option value="none">只備份資料（檔案小）</option><option value="90">資料＋近 90 天照片</option><option value="all">資料＋全部照片（檔案大）</option></select>
 <div class="row"><button id="bk">匯出備份</button><label class="btn alt">匯入還原<input id="bki" type="file" accept=".json,application/json" hidden></label></div>
-<p class="mut" id="bkl"></p></div>
-</main><dialog id="mdlg"><b>新增餐點</b>
+<p class="mut" id="bkl"></p></details>
+<button id="saveP" style="width:100%">儲存設定</button>
+</section>
+</main>
+<nav id="nav" aria-label="主選單"><button data-tab="today"><span class="ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7"/><path d="M6 10v9h12v-9"/><path d="M10 19v-5h4v5"/></svg></span><span>今天</span></button><button data-tab="trend"><span class="ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4v16h16"/><path d="M8 15l3.5-4 3 3L20 7"/></svg></span><span>趨勢</span></button><button data-tab="hist"><span class="ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2.5"/><path d="M4 10h16M9 3v4M15 3v4"/></svg></span><span>歷史</span></button><button data-tab="food"><span class="ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16a8 8 0 0 1-16 0z"/><path d="M9 8c0-1.6 1.2-1.6 1.2-3.2M14 8c0-1.6 1.2-1.6 1.2-3.2"/></svg></span><span>食物庫</span></button><button data-tab="set"><span class="ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/><circle cx="9" cy="7" r="2.2" fill="var(--card)"/><circle cx="15.5" cy="12" r="2.2" fill="var(--card)"/><circle cx="8" cy="17" r="2.2" fill="var(--card)"/></svg></span><span>設定</span></button></nav><dialog id="mdlg"><b>新增餐點</b>
 <img id="mpv" alt="餐點照片" hidden style="width:100%;max-height:180px;object-fit:cover;border-radius:10px;margin:8px 0">
 <label>補充說明（選填，讓 AI 判斷更準）<textarea id="mdesc" rows="3" placeholder="例如：雞腿便當，飯吃一半，沒吃雞皮，加一份青菜"></textarea></label>
 <b style="font-size:14px">從食物庫加入</b>
@@ -110,25 +124,50 @@ const today=()=>ymd(new Date()),day=k=>db.days[k]??={meals:[]};
 const kin=d=>(d.meals||[]).reduce((a,m)=>a+(m.ai?.kcal||0),0);
 function toast(t){const e=$('#toast');e.textContent=t;e.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.display='none',3500)}
 
-async function sync(){
+async function sync(days=30){
   const H=window.Capacitor?.Plugins?.Health;
-  if(!H) return toast('請在 Android App 內使用同步');
+  if(!H)return toast('請在 Android App 內使用同步');
+  const ok=[],fails=[];
   try{
     const a=await H.isAvailable();
     if(!a.available){await H.openHealthConnectSettings();return toast('請先安裝或更新 Health Connect')}
-    await H.requestAuthorization({read:['steps','totalCalories','calories','basalCalories','weight'],write:[],requestHistoryAccess:true});
-    const end=new Date(),start=new Date(end-30*864e5);start.setHours(0,0,0,0);
-    const q={startDate:start.toISOString(),endDate:end.toISOString()};
-    const fails=[],set=(samples,f,add)=>samples.forEach(s=>{const d=day(ymd(new Date(s.startDate))),v=Math.round(s.value??s.values?.sum??0);d[f]=add?(d[f]||0)+v:v});
-    const agg=async t=>(await H.queryAggregated({dataType:t,...q,bucket:'day',aggregation:'sum'})).samples;
-    try{set(await agg('steps'),'steps')}catch(e){fails.push('步數：'+e.message)}
-    try{set(await agg('totalCalories'),'kcalOut')}
-    catch(e1){
-      try{set(await agg('calories'),'kcalOut');try{set(await agg('basalCalories'),'kcalOut',true)}catch(_){}}
-      catch(e2){fails.push('消耗熱量：'+e2.message)}
+    await H.requestAuthorization({read:RD,write:[],requestHistoryAccess:true});
+    const end=new Date(),start=new Date(end-days*864e5);start.setHours(0,0,0,0);
+    const q={startDate:start.toISOString(),endDate:end.toISOString()},dk=s=>ymd(new Date(s.startDate)),num=s=>+(s.value??s.values?.sum??s.values?.average??0);
+    const agg=async(t,g)=>(await H.queryAggregated({dataType:t,...q,bucket:'day',aggregation:g})).samples;
+    const rs=async(t,limit=2000)=>(await H.readSamples({dataType:t,...q,limit,ascending:true})).samples;
+    const err=e=>/permission|authori|denied/i.test(e.message)?'未授權':e.message,hh=k=>day(k).h??={};
+    const put=(sp,k,v)=>{if(sp.pct&&v<=1)v*=100;if(sp.f)v=sp.f(v);if(!isFinite(v))return 0;const d=day(k);if(sp.top)d[sp.top]=sp.top==='weight'?+v.toFixed(1):Math.round(v);else hh(k)[sp.k]=+v.toFixed(1);return 1};
+    for(const sp of SPEC){
+      try{
+        const m=new Map();
+        if(sp.how==='last'){for(const s of await rs(sp.t,1000))m.set(dk(s),num(s))}
+        else{
+          let done=false;
+          try{for(const s of await agg(sp.t,sp.how==='sum'?'sum':'average'))m.set(dk(s),num(s));done=true}catch(_){}
+          if(!done){const g={};for(const s of await rs(sp.t,5000))(g[dk(s)]??=[]).push(num(s));
+            for(const[k,v]of Object.entries(g))m.set(k,v.reduce((x,y)=>x+y,0)/(sp.how==='sum'?1:v.length))}
+        }
+        let n=0;for(const[k,v]of m)n+=put(sp,k,v);if(n)ok.push(`${sp.n} ${n} 天`);
+      }catch(e){fails.push(`${sp.n}：${err(e)}`)}
     }
-    try{const {samples}=await H.readSamples({dataType:'weight',...q,limit:200,ascending:true});samples.forEach(s=>day(ymd(new Date(s.startDate))).weight=+(+s.value).toFixed(1))}catch(e){fails.push('體重：'+e.message)}
-    save();render();toast(fails.length?'部分同步失敗：'+fails.join('；'):'已同步最近 30 天');
+    // 總消耗熱量
+    try{const sm=await agg('totalCalories','sum');sm.forEach(s=>day(dk(s)).kcalOut=Math.round(num(s)));ok.push(`消耗熱量 ${sm.length} 天`)}
+    catch(_){try{const sm=await agg('calories','sum');sm.forEach(s=>day(dk(s)).kcalOut=Math.round(num(s)));
+        try{(await agg('basalCalories','sum')).forEach(s=>{const d=day(dk(s));d.kcalOut=(d.kcalOut||0)+Math.round(num(s))})}catch(__){}
+        ok.push(`消耗熱量(活動${'+'}基礎) ${sm.length} 天`)}catch(e){fails.push('消耗熱量：'+err(e))}}
+    // 睡眠（每天睡了幾小時，算在醒來那天）
+    try{const g={};for(const s of await rs('sleep',3000)){const st=String(s.sleepState??'').toLowerCase();if(/awake|out/.test(st)||!s.endDate)continue;
+        const k=ymd(new Date(s.endDate));g[k]=(g[k]||0)+(new Date(s.endDate)-new Date(s.startDate))/36e5}
+      let n=0;for(const[k,v]of Object.entries(g))if(v>0){hh(k).sleep=+v.toFixed(1);n++}if(n)ok.push(`睡眠 ${n} 天`)}catch(e){fails.push('睡眠：'+err(e))}
+    // 血壓（當天最後一筆）
+    try{let n=0;for(const s of await rs('bloodPressure',500)){const sy=s.systolic??s.value?.systolic,di=s.diastolic??s.value?.diastolic;if(sy&&di){hh(dk(s)).bp=`${Math.round(sy)}/${Math.round(di)}`;n++}}if(n)ok.push(`血壓 ${n} 筆`)}catch(e){fails.push('血壓：'+err(e))}
+    // 運動紀錄
+    try{if(H.queryWorkouts){const r=await H.queryWorkouts({...q,limit:300,ascending:true}),L=r.workouts||r.samples||[],byDay={};
+        L.forEach(w=>{const min=Math.round((new Date(w.endDate)-new Date(w.startDate))/6e4);if(!(min>0))return;(byDay[dk(w)]??=[]).push({n:String(w.workoutType??w.type??'運動'),min,kcal:Math.round(w.totalEnergyBurned??w.calories??0)})});
+        Object.entries(byDay).forEach(([k,v])=>hh(k).wk=v);if(L.length)ok.push(`運動紀錄 ${L.length} 筆`)}}catch(e){fails.push('運動紀錄：'+err(e))}
+    db.syncLog={at:new Date().toLocaleString(),ok,fails};save();render();
+    toast(fails.length?`同步完成，${fails.length} 項失敗（見同步詳情）`:`已同步最近 ${days} 天`);
   }catch(e){toast('同步失敗：'+e.message)}
 }
 
@@ -162,7 +201,7 @@ $('#cam').onchange=async e=>{const f=e.target.files[0];if(!f)return;openMeal(awa
 function digest(n){
   const out=[];
   for(let i=n-1;i>=0;i--){const k=ymd(new Date(Date.now()-i*864e5)),d=db.days[k]||{};
-    out.push(`${k}｜體重${d.weight??'-'}kg｜步數${d.steps??'-'}｜消耗${d.kcalOut??'-'}kcal｜攝取${kin(d)||'-'}kcal｜${(d.meals||[]).map(m=>m.ai?.name).filter(Boolean).join('、')||'無紀錄'}`)}
+    out.push(`${k}｜體重${d.weight??'-'}kg｜步數${d.steps??'-'}｜消耗${d.kcalOut??'-'}kcal｜攝取${kin(d)||'-'}kcal｜${hxText(d)}${(d.meals||[]).map(m=>m.ai?.name).filter(Boolean).join('、')||'無紀錄'}`)}
   return out.join('\n');
 }
 
@@ -186,12 +225,16 @@ $('#saveP').onclick=()=>{db.p={w0:+$('#w0').value,wt:+$('#wt').value,dt:$('#dt')
 function render(){
   const d=day(today()),p=db.p,ws=Object.keys(db.days).sort().filter(k=>db.days[k].weight),lw=ws.length?db.days[ws.at(-1)].weight:p.w0;
   $('#stats').innerHTML=[['體重',lw??'-'],['步數',d.steps??'-'],['消耗',d.kcalOut??'-'],['攝取',kin(d)||'-']].map(([a,b])=>`<div><b>${b}</b><span>${a}</span></div>`).join('');
-  $('#goal').textContent=p.wt&&lw?`距離目標 ${p.wt}kg 還差 ${(lw-p.wt).toFixed(1)}kg`:'先在下方設定目標體重';
-  $('#meals').innerHTML=d.meals.length?d.meals.map((m,i)=>`<div class="card meal">${m.imgId?`<img data-img="${m.imgId}" alt="">`:''}<div><b>${esc(m.ai?.name||(busy.has(m)?'分析中…':'未分析'))}</b><br><span class="mut">${m.t}${m.ai?`｜約 ${m.ai.kcal} kcal｜蛋白質 ${m.ai.protein_g}g`:''}</span>${m.desc?`<br><span class="mut">說明：${esc(m.desc)}</span>`:''}<br><span class="mut">${esc(m.ai?.note||'')}</span>${m.ai?`<br><button class="alt" style="padding:2px 10px;font-size:13px" data-sv="${today()}|${i}">存入食物庫</button>`:''}</div></div>`).join(''):'<p class="mut">還沒有紀錄，拍下今天吃的第一餐，或用文字／食物庫記錄。</p>';bindSv($('#meals'));
-  $('#reviews').innerHTML=['day','week','month'].filter(k=>db.rv[k]).map(k=>`<div class="card"><span class="mut">${{day:'今日總結',week:'本週檢討',month:'本月檢討'}[k]}｜${db.rv[k].date}</span><div class="rv">${db.rv[k].text.replace(/</g,'&lt;')}</div></div>`).join('');
+  $('#goal').textContent=p.wt&&lw?`距離目標 ${p.wt}kg 還差 ${(lw-p.wt).toFixed(1)}kg`:'先到「設定」填入目標體重';
+  $('#meals').innerHTML=d.meals.length?d.meals.map((m,i)=>`<div class="card meal">${m.imgId?`<img data-img="${m.imgId}" alt="">`:''}<div><b>${esc(m.ai?.name||(busy.has(m)?'分析中…':'未分析'))}</b><br><span class="mut">${m.t}${m.ai?`｜約 ${m.ai.kcal} kcal｜蛋白質 ${m.ai.protein_g}g`:''}</span>${m.desc?`<br><span class="mut">說明：${esc(m.desc)}</span>`:''}${m.ai?.note?`<br><span class="mut">${esc(m.ai.note)}</span>`:''}${m.ai?`<br><button class="alt" style="padding:2px 10px;font-size:13px;margin-top:4px" data-sv="${today()}|${i}">存入食物庫</button>`:''}</div></div>`).join(''):'<p class="mut">還沒有紀錄，拍下今天吃的第一餐，或用文字／食物庫記錄。</p>';bindSv($('#meals'));
+  {const last=db.rvh.at(-1)?.kind,KNm={day:'今日總結',week:'本週檢討',month:'本月檢討'};
+  $('#reviews').innerHTML=['day','week','month'].filter(k=>db.rv[k]).map(k=>`<details class="card" ${k===last?'open':''}><summary class="mut">${KNm[k]}｜${db.rv[k].date}</summary><div class="rv">${esc(db.rv[k].text)}</div></details>`).join('');}
   ['w0','wt','dt','ht','key','gkey','gmodel'].forEach(k=>$('#'+k).value=p[k]??'');$('#prov').value=p.prov||'gemini';
   if(p.rm)rmIds.forEach(i=>{const e=$('#'+i);e.type==='checkbox'?e.checked=p.rm[i]:e.value=p.rm[i]});
   const n=Object.keys(db.days).length;$('#bkl').textContent=(db.lastBackup?`上次備份：${db.lastBackup}`:'還沒備份過')+(n>14&&(!db.lastBackup||Date.now()-new Date(db.lastBackup)>30*864e5)?'｜建議現在備份':'');
+  const sl=db.syncLog;$('#ss').textContent=sl?`上次同步 ${sl.at}｜成功 ${sl.ok.length} 項${sl.fails.length?`｜失敗 ${sl.fails.length} 項`:''}`:'尚未同步';
+  $('#sl').innerHTML=sl?esc(sl.ok.join('、'))+(sl.fails.length?'<br>失敗：'+esc(sl.fails.join('；')):''):'';
+  $('#hxd').innerHTML=hxHtml(day(today()))||'<p class="mut">今天還沒有其他數據，同步後顯示</p>';
   drawCharts();renderHist();renderFoods();loadImgs();
 }
 const idb=new Promise((ok,no)=>{const r=indexedDB.open('dc_img',1);r.onupgradeneeded=()=>r.result.createObjectStore('i');r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)});
@@ -212,7 +255,7 @@ function stat(keys){
 }
 function dayCard(k){
   const d=db.days[k]||{meals:[]};
-  return`<div class="card"><b>${k}</b><div class="stats" style="margin:8px 0">${[['體重',d.weight??'-'],['步數',d.steps??'-'],['消耗',d.kcalOut??'-'],['攝取',kin(d)||'-']].map(([a,b])=>`<div><b>${b}</b><span>${a}</span></div>`).join('')}</div>`
+  return`<div class="card"><b>${k}</b><div class="stats" style="margin:8px 0">${[['體重',d.weight??'-'],['步數',d.steps??'-'],['消耗',d.kcalOut??'-'],['攝取',kin(d)||'-']].map(([a,b])=>`<div><b>${b}</b><span>${a}</span></div>`).join('')}</div>${hxHtml(d)}`
    +(d.meals.map((m,i)=>`<div class="meal" style="margin-top:8px">${m.imgId?`<img data-img="${m.imgId}" alt="">`:''}<div><b>${esc(m.ai?.name||'未分析')}</b><br><span class="mut">${m.t}${m.ai?`｜${m.ai.kcal} kcal｜蛋白質 ${m.ai.protein_g}g`:''}</span>${m.desc?`<br><span class="mut">說明：${esc(m.desc)}</span>`:''}<br>${m.ai?`<button class="alt" style="padding:2px 10px;font-size:13px" data-sv="${k}|${i}">存入食物庫</button> `:''}<button class="alt" style="padding:2px 10px;font-size:13px" data-del="${k}|${i}">刪除</button></div></div>`).join('')||'<p class="mut">當天沒有餐點紀錄</p>')
    +(d.review?`<p class="mut" style="margin:10px 0 0">AI 今日總結</p><div class="rv">${esc(d.review)}</div>`:'')+'</div>';
 }
@@ -292,7 +335,7 @@ function renderFoods(){
 }
 function fillFood(f){
   fe=f.id||null;$('#fn').value=f.name||'';$('#fu').value=f.unit||'1份';$('#fk').value=f.kcal??'';$('#fp').value=f.protein_g??'';$('#fd').hidden=!fe;
-  $('#foodcard').scrollIntoView({behavior:'smooth',block:'center'});toast(fe?'已載入，修改後按「儲存」':'已帶入表單，確認後按「儲存」');
+  showTab('food');$('#foodcard').scrollIntoView({block:'center'});toast(fe?'已載入，修改後按「儲存」':'已帶入表單，確認後按「儲存」');
 }
 const bindSv=el=>el.querySelectorAll('[data-sv]').forEach(b=>b.onclick=()=>{const[k,i]=b.dataset.sv.split('|'),m=db.days[k].meals[+i];fillFood({name:m.ai.name,unit:'1份',kcal:m.ai.kcal,protein_g:m.ai.protein_g})});
 $('#fq').oninput=renderFoods;
@@ -348,7 +391,20 @@ $('#mgo').onclick=async()=>{
   }catch(err){toast('分析失敗：'+err.message);if(items.length)m.ai=fromLib()}
   busy.delete(m);save();render();
 };
-$('#sync').onclick=sync;render();
+const RD=['steps','distance','calories','basalCalories','totalCalories','heartRate','restingHeartRate','heartRateVariability','oxygenSaturation','respiratoryRate','bodyTemperature','bloodGlucose','bloodPressure','weight','bodyFat','height','sleep','flightsClimbed','exerciseTime','workouts'];
+const SPEC=[{n:'步數',t:'steps',how:'sum',top:'steps'},{n:'體重',t:'weight',how:'last',top:'weight'},
+ {n:'距離',t:'distance',how:'sum',k:'distanceKm',f:v=>v/1000},{n:'爬樓',t:'flightsClimbed',how:'sum',k:'floors'},{n:'運動時間',t:'exerciseTime',how:'sum',k:'exMin'},
+ {n:'平均心率',t:'heartRate',how:'avg',k:'hr'},{n:'靜息心率',t:'restingHeartRate',how:'avg',k:'rhr'},{n:'HRV',t:'heartRateVariability',how:'avg',k:'hrv'},
+ {n:'血氧',t:'oxygenSaturation',how:'avg',k:'spo2',pct:1},{n:'呼吸率',t:'respiratoryRate',how:'avg',k:'resp'},{n:'體溫',t:'bodyTemperature',how:'avg',k:'temp'},
+ {n:'血糖',t:'bloodGlucose',how:'avg',k:'glucose'},{n:'體脂',t:'bodyFat',how:'last',k:'fat',pct:1}];
+const HL={sleep:['睡眠','小時'],distanceKm:['距離','公里'],floors:['爬樓','層'],exMin:['運動時間','分鐘'],hr:['平均心率','bpm'],rhr:['靜息心率','bpm'],hrv:['HRV','ms'],spo2:['血氧','%'],resp:['呼吸率','次/分'],temp:['體溫','°C'],glucose:['血糖',''],fat:['體脂','%'],bp:['血壓','mmHg']};
+const hxItems=d=>{const h=d.h||{},p=Object.entries(h).filter(([k])=>HL[k]).map(([k,v])=>[HL[k][0],`${v}${HL[k][1]}`]);if(h.wk?.length)p.push(['運動',h.wk.map(w=>`${w.n} ${w.min}分${w.kcal?`/${w.kcal}kcal`:''}`).join('、')]);return p};
+const hxHtml=d=>{const p=hxItems(d);return p.length?`<div class="hx">${p.map(([a,b])=>`<span>${esc(a)} <b>${esc(b)}</b></span>`).join('')}</div>`:''};
+const hxText=d=>{const p=hxItems(d);return p.length?p.map(([a,b])=>a+b).join('、')+'｜':''};
+const TT={today:'今天',trend:'趨勢',hist:'歷史紀錄',food:'食物庫',set:'設定'};
+function showTab(t){document.querySelectorAll('.tab').forEach(e=>e.hidden=e.id!=='t-'+t);document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));$('#ttl').textContent=TT[t];scrollTo(0,0)}
+$('#nav').onclick=e=>{const b=e.target.closest('button');if(b)showTab(b.dataset.tab)};showTab('today');
+$('#sync').onclick=()=>sync(+$('#sr').value);render();
 
 var wc=null,cc=null;
 function drawCharts(){
