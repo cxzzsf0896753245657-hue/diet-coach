@@ -45,7 +45,9 @@ input,textarea,select{font:inherit;width:100%;padding:9px;border-radius:8px;bord
 <p class="mut" id="goal"></p>
 <details><summary class="mut">更多健康數據（今天）</summary><div id="hxd"></div></details></div>
 <div class="act"><label class="btn big">拍照記錄飲食<input id="cam" type="file" accept="image/*" capture="environment" hidden></label>
-<button class="alt big" id="addm">文字／食物庫記錄</button></div>
+<label class="btn alt big">從相簿補登<input id="gal" type="file" accept="image/*" multiple hidden></label>
+<button class="alt big" id="addm" style="grid-column:1/-1">文字／食物庫記錄</button></div>
+<input id="att" type="file" accept="image/*" hidden>
 <h2>今天的飲食</h2><div id="meals"></div>
 <h2>AI 教練</h2>
 <div class="row"><button class="alt" data-r="day">今日總結</button><button class="alt" data-r="week">本週檢討</button><button class="alt" data-r="month">本月檢討</button></div>
@@ -105,7 +107,8 @@ input,textarea,select{font:inherit;width:100%;padding:9px;border-radius:8px;bord
 <button id="saveP" style="width:100%">儲存設定</button>
 </section>
 </main>
-<nav id="nav" aria-label="主選單"><button data-tab="today"><span class="ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7"/><path d="M6 10v9h12v-9"/><path d="M10 19v-5h4v5"/></svg></span><span>今天</span></button><button data-tab="trend"><span class="ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4v16h16"/><path d="M8 15l3.5-4 3 3L20 7"/></svg></span><span>趨勢</span></button><button data-tab="hist"><span class="ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2.5"/><path d="M4 10h16M9 3v4M15 3v4"/></svg></span><span>歷史</span></button><button data-tab="food"><span class="ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16a8 8 0 0 1-16 0z"/><path d="M9 8c0-1.6 1.2-1.6 1.2-3.2M14 8c0-1.6 1.2-1.6 1.2-3.2"/></svg></span><span>食物庫</span></button><button data-tab="set"><span class="ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/><circle cx="9" cy="7" r="2.2" fill="var(--card)"/><circle cx="15.5" cy="12" r="2.2" fill="var(--card)"/><circle cx="8" cy="17" r="2.2" fill="var(--card)"/></svg></span><span>設定</span></button></nav><dialog id="mdlg"><b>新增餐點</b>
+<nav id="nav" aria-label="主選單"><button data-tab="today"><span class="ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7"/><path d="M6 10v9h12v-9"/><path d="M10 19v-5h4v5"/></svg></span><span>今天</span></button><button data-tab="trend"><span class="ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4v16h16"/><path d="M8 15l3.5-4 3 3L20 7"/></svg></span><span>趨勢</span></button><button data-tab="hist"><span class="ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2.5"/><path d="M4 10h16M9 3v4M15 3v4"/></svg></span><span>歷史</span></button><button data-tab="food"><span class="ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16a8 8 0 0 1-16 0z"/><path d="M9 8c0-1.6 1.2-1.6 1.2-3.2M14 8c0-1.6 1.2-1.6 1.2-3.2"/></svg></span><span>食物庫</span></button><button data-tab="set"><span class="ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/><circle cx="9" cy="7" r="2.2" fill="var(--card)"/><circle cx="15.5" cy="12" r="2.2" fill="var(--card)"/><circle cx="8" cy="17" r="2.2" fill="var(--card)"/></svg></span><span>設定</span></button></nav><dialog id="mdlg"><b>新增餐點</b><span class="mut" id="mcnt"></span>
+<div class="tm" style="margin-top:6px"><label>日期<input id="mdate" type="date"></label><label>時間<input id="mtime" type="time"></label></div><p class="mut" id="mnote" style="margin:0 0 6px"></p>
 <img id="mpv" alt="餐點照片" hidden style="width:100%;max-height:180px;object-fit:cover;border-radius:10px;margin:8px 0">
 <label>補充說明（選填，讓 AI 判斷更準）<textarea id="mdesc" rows="3" placeholder="例如：雞腿便當，飯吃一半，沒吃雞皮，加一份青菜"></textarea></label>
 <b style="font-size:14px">從食物庫加入</b>
@@ -131,7 +134,11 @@ async function sync(days=30){
   try{
     const a=await H.isAvailable();
     if(!a.available){await H.openHealthConnectSettings();return toast('請先安裝或更新 Health Connect')}
-    await H.requestAuthorization({read:RD,write:[],requestHistoryAccess:true});
+    let types=[...RD];const unsup=[];
+    for(let i=0;i<RD.length;i++){
+      try{await H.requestAuthorization({read:types,write:[],requestHistoryAccess:true});break}
+      catch(e){const m=/Unsupported data type:\s*(\w+)/i.exec(e.message);if(!m||!types.includes(m[1]))throw e;types=types.filter(t=>t!==m[1]);unsup.push(m[1])}
+    }
     const end=new Date(),start=new Date(end-days*864e5);start.setHours(0,0,0,0);
     const q={startDate:start.toISOString(),endDate:end.toISOString()},dk=s=>ymd(new Date(s.startDate)),num=s=>+(s.value??s.values?.sum??s.values?.average??0);
     const agg=async(t,g)=>(await H.queryAggregated({dataType:t,...q,bucket:'day',aggregation:g})).samples;
@@ -139,6 +146,7 @@ async function sync(days=30){
     const err=e=>/permission|authori|denied/i.test(e.message)?'未授權':e.message,hh=k=>day(k).h??={};
     const put=(sp,k,v)=>{if(sp.pct&&v<=1)v*=100;if(sp.f)v=sp.f(v);if(!isFinite(v))return 0;const d=day(k);if(sp.top)d[sp.top]=sp.top==='weight'?+v.toFixed(1):Math.round(v);else hh(k)[sp.k]=+v.toFixed(1);return 1};
     for(const sp of SPEC){
+      if(unsup.includes(sp.t))continue;
       try{
         const m=new Map();
         if(sp.how==='last'){for(const s of await rs(sp.t,1000))m.set(dk(s),num(s))}
@@ -157,16 +165,16 @@ async function sync(days=30){
         try{(await agg('basalCalories','sum')).forEach(s=>{const d=day(dk(s));d.kcalOut=(d.kcalOut||0)+Math.round(num(s))})}catch(__){}
         ok.push(`消耗熱量(活動${'+'}基礎) ${sm.length} 天`)}catch(e){fails.push('消耗熱量：'+err(e))}}
     // 睡眠（每天睡了幾小時，算在醒來那天）
-    try{const g={};for(const s of await rs('sleep',3000)){const st=String(s.sleepState??'').toLowerCase();if(/awake|out/.test(st)||!s.endDate)continue;
+    if(!unsup.includes('sleep'))try{const g={};for(const s of await rs('sleep',3000)){const st=String(s.sleepState??'').toLowerCase();if(/awake|out/.test(st)||!s.endDate)continue;
         const k=ymd(new Date(s.endDate));g[k]=(g[k]||0)+(new Date(s.endDate)-new Date(s.startDate))/36e5}
       let n=0;for(const[k,v]of Object.entries(g))if(v>0){hh(k).sleep=+v.toFixed(1);n++}if(n)ok.push(`睡眠 ${n} 天`)}catch(e){fails.push('睡眠：'+err(e))}
     // 血壓（當天最後一筆）
-    try{let n=0;for(const s of await rs('bloodPressure',500)){const sy=s.systolic??s.value?.systolic,di=s.diastolic??s.value?.diastolic;if(sy&&di){hh(dk(s)).bp=`${Math.round(sy)}/${Math.round(di)}`;n++}}if(n)ok.push(`血壓 ${n} 筆`)}catch(e){fails.push('血壓：'+err(e))}
+    if(!unsup.includes('bloodPressure'))try{let n=0;for(const s of await rs('bloodPressure',500)){const sy=s.systolic??s.value?.systolic,di=s.diastolic??s.value?.diastolic;if(sy&&di){hh(dk(s)).bp=`${Math.round(sy)}/${Math.round(di)}`;n++}}if(n)ok.push(`血壓 ${n} 筆`)}catch(e){fails.push('血壓：'+err(e))}
     // 運動紀錄
-    try{if(H.queryWorkouts){const r=await H.queryWorkouts({...q,limit:300,ascending:true}),L=r.workouts||r.samples||[],byDay={};
+    if(!unsup.includes('workouts'))try{if(H.queryWorkouts){const r=await H.queryWorkouts({...q,limit:300,ascending:true}),L=r.workouts||r.samples||[],byDay={};
         L.forEach(w=>{const min=Math.round((new Date(w.endDate)-new Date(w.startDate))/6e4);if(!(min>0))return;(byDay[dk(w)]??=[]).push({n:String(w.workoutType??w.type??'運動'),min,kcal:Math.round(w.totalEnergyBurned??w.calories??0)})});
         Object.entries(byDay).forEach(([k,v])=>hh(k).wk=v);if(L.length)ok.push(`運動紀錄 ${L.length} 筆`)}}catch(e){fails.push('運動紀錄：'+err(e))}
-    db.syncLog={at:new Date().toLocaleString(),ok,fails};save();render();
+    db.syncLog={at:new Date().toLocaleString(),ok,fails,skip:unsup};save();render();
     toast(fails.length?`同步完成，${fails.length} 項失敗（見同步詳情）`:`已同步最近 ${days} 天`);
   }catch(e){toast('同步失敗：'+e.message)}
 }
@@ -226,14 +234,14 @@ function render(){
   const d=day(today()),p=db.p,ws=Object.keys(db.days).sort().filter(k=>db.days[k].weight),lw=ws.length?db.days[ws.at(-1)].weight:p.w0;
   $('#stats').innerHTML=[['體重',lw??'-'],['步數',d.steps??'-'],['消耗',d.kcalOut??'-'],['攝取',kin(d)||'-']].map(([a,b])=>`<div><b>${b}</b><span>${a}</span></div>`).join('');
   $('#goal').textContent=p.wt&&lw?`距離目標 ${p.wt}kg 還差 ${(lw-p.wt).toFixed(1)}kg`:'先到「設定」填入目標體重';
-  $('#meals').innerHTML=d.meals.length?d.meals.map((m,i)=>`<div class="card meal">${m.imgId?`<img data-img="${m.imgId}" alt="">`:''}<div><b>${esc(m.ai?.name||(busy.has(m)?'分析中…':'未分析'))}</b><br><span class="mut">${m.t}${m.ai?`｜約 ${m.ai.kcal} kcal｜蛋白質 ${m.ai.protein_g}g`:''}</span>${m.desc?`<br><span class="mut">說明：${esc(m.desc)}</span>`:''}${m.ai?.note?`<br><span class="mut">${esc(m.ai.note)}</span>`:''}${m.ai?`<br><button class="alt" style="padding:2px 10px;font-size:13px;margin-top:4px" data-sv="${today()}|${i}">存入食物庫</button>`:''}</div></div>`).join(''):'<p class="mut">還沒有紀錄，拍下今天吃的第一餐，或用文字／食物庫記錄。</p>';bindSv($('#meals'));
+  $('#meals').innerHTML=d.meals.length?d.meals.map((m,i)=>`<div class="card meal">${m.imgId?`<img data-img="${m.imgId}" alt="">`:''}<div><b>${esc(m.ai?.name||(busy.has(m)?'分析中…':'未分析'))}</b><br><span class="mut">${m.t}${m.ai?`｜約 ${m.ai.kcal} kcal｜蛋白質 ${m.ai.protein_g}g`:''}</span>${m.desc?`<br><span class="mut">說明：${esc(m.desc)}</span>`:''}${m.ai?.note?`<br><span class="mut">${esc(m.ai.note)}</span>`:''}${(m.ai||!m.imgId)?`<br>${m.ai?`<button class="alt" style="padding:2px 10px;font-size:13px;margin-top:4px" data-sv="${today()}|${i}">存入食物庫</button> `:''}${m.imgId?'':`<button class="alt" style="padding:2px 10px;font-size:13px;margin-top:4px" data-att="${today()}|${i}">補照片</button>`}`:''}</div></div>`).join(''):'<p class="mut">還沒有紀錄，拍下今天吃的第一餐，或用文字／食物庫記錄。</p>';bindSv($('#meals'));bindAtt($('#meals'));
   {const last=db.rvh.at(-1)?.kind,KNm={day:'今日總結',week:'本週檢討',month:'本月檢討'};
   $('#reviews').innerHTML=['day','week','month'].filter(k=>db.rv[k]).map(k=>`<details class="card" ${k===last?'open':''}><summary class="mut">${KNm[k]}｜${db.rv[k].date}</summary><div class="rv">${esc(db.rv[k].text)}</div></details>`).join('');}
   ['w0','wt','dt','ht','key','gkey','gmodel'].forEach(k=>$('#'+k).value=p[k]??'');$('#prov').value=p.prov||'gemini';
   if(p.rm)rmIds.forEach(i=>{const e=$('#'+i);e.type==='checkbox'?e.checked=p.rm[i]:e.value=p.rm[i]});
   const n=Object.keys(db.days).length;$('#bkl').textContent=(db.lastBackup?`上次備份：${db.lastBackup}`:'還沒備份過')+(n>14&&(!db.lastBackup||Date.now()-new Date(db.lastBackup)>30*864e5)?'｜建議現在備份':'');
   const sl=db.syncLog;$('#ss').textContent=sl?`上次同步 ${sl.at}｜成功 ${sl.ok.length} 項${sl.fails.length?`｜失敗 ${sl.fails.length} 項`:''}`:'尚未同步';
-  $('#sl').innerHTML=sl?esc(sl.ok.join('、'))+(sl.fails.length?'<br>失敗：'+esc(sl.fails.join('；')):''):'';
+  $('#sl').innerHTML=sl?esc(sl.ok.join('、'))+(sl.fails.length?'<br>失敗：'+esc(sl.fails.join('；')):'')+(sl.skip?.length?'<br>此外掛不支援（已略過）：'+esc(sl.skip.join('、')):''):'';
   $('#hxd').innerHTML=hxHtml(day(today()))||'<p class="mut">今天還沒有其他數據，同步後顯示</p>';
   drawCharts();renderHist();renderFoods();loadImgs();
 }
@@ -256,7 +264,7 @@ function stat(keys){
 function dayCard(k){
   const d=db.days[k]||{meals:[]};
   return`<div class="card"><b>${k}</b><div class="stats" style="margin:8px 0">${[['體重',d.weight??'-'],['步數',d.steps??'-'],['消耗',d.kcalOut??'-'],['攝取',kin(d)||'-']].map(([a,b])=>`<div><b>${b}</b><span>${a}</span></div>`).join('')}</div>${hxHtml(d)}`
-   +(d.meals.map((m,i)=>`<div class="meal" style="margin-top:8px">${m.imgId?`<img data-img="${m.imgId}" alt="">`:''}<div><b>${esc(m.ai?.name||'未分析')}</b><br><span class="mut">${m.t}${m.ai?`｜${m.ai.kcal} kcal｜蛋白質 ${m.ai.protein_g}g`:''}</span>${m.desc?`<br><span class="mut">說明：${esc(m.desc)}</span>`:''}<br>${m.ai?`<button class="alt" style="padding:2px 10px;font-size:13px" data-sv="${k}|${i}">存入食物庫</button> `:''}<button class="alt" style="padding:2px 10px;font-size:13px" data-del="${k}|${i}">刪除</button></div></div>`).join('')||'<p class="mut">當天沒有餐點紀錄</p>')
+   +(d.meals.map((m,i)=>`<div class="meal" style="margin-top:8px">${m.imgId?`<img data-img="${m.imgId}" alt="">`:''}<div><b>${esc(m.ai?.name||'未分析')}</b><br><span class="mut">${m.t}${m.ai?`｜${m.ai.kcal} kcal｜蛋白質 ${m.ai.protein_g}g`:''}</span>${m.desc?`<br><span class="mut">說明：${esc(m.desc)}</span>`:''}<br>${m.ai?`<button class="alt" style="padding:2px 10px;font-size:13px" data-sv="${k}|${i}">存入食物庫</button> `:''}${m.imgId?'':`<button class="alt" style="padding:2px 10px;font-size:13px" data-att="${k}|${i}">補照片</button> `}<button class="alt" style="padding:2px 10px;font-size:13px" data-del="${k}|${i}">刪除</button></div></div>`).join('')||'<p class="mut">當天沒有餐點紀錄</p>')
    +(d.review?`<p class="mut" style="margin:10px 0 0">AI 今日總結</p><div class="rv">${esc(d.review)}</div>`:'')+'</div>';
 }
 function viewCal(){
@@ -292,7 +300,7 @@ function renderHist(){
   q('[data-more]',b=>b.onclick=()=>{hs.rn+=20;renderHist()});
   q('[data-rv]',b=>b.onclick=()=>{const r=db.rvh[+b.dataset.rv];$('#dtt').textContent=`${r.date}｜${KN[r.kind]}`;$('#dtx').textContent=r.text;$('#dlg').showModal()});
   q('[data-del]',b=>b.onclick=()=>{const[k,i]=b.dataset.del.split('|'),m=db.days[k].meals[+i];if(confirm('刪除這筆餐點紀錄？')){if(m.imgId)delImg(m.imgId);db.days[k].meals.splice(+i,1);save();render()}});
-  bindSv(el);loadImgs();
+  bindSv(el);bindAtt(el);loadImgs();
 }
 $('#seg').onclick=e=>{const t=e.target.dataset.t;if(t){hs.tab=t;renderHist()}};
 $('#trs').onclick=e=>{const n=e.target.dataset.n;if(n){tr=n==='all'?'all':+n;drawCharts()}};
@@ -364,22 +372,39 @@ function renderMd(){
   $('#msel').querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{md.items.splice(+b.dataset.rm,1);renderMd()});
   updSum();
 }
-function openMeal(img){
-  md={img,items:[]};$('#mdesc').value='';$('#msq').value='';const pv=$('#mpv');pv.hidden=!img;if(img)pv.src=img;
-  renderMd();$('#mdlg').showModal();
+var mq=[];
+const nowT=()=>new Date().toTimeString().slice(0,5);
+function nextMeal(){const n=mq.shift();if(n)openMeal(n.img,n.d,n.t,mq.length,n.note)}
+function openMeal(img,d,t,left,note){
+  md={img,items:[]};$('#mdesc').value='';$('#msq').value='';$('#mdate').max=today();$('#mdate').value=d||today();$('#mtime').value=t||nowT();
+  $('#mcnt').textContent=left?`　（還有 ${left} 張待處理）`:'';$('#mnote').textContent=note||'';const pv=$('#mpv');pv.hidden=!img;if(img)pv.src=img;
+  renderMd();if(!$('#mdlg').open)$('#mdlg').showModal();document.activeElement?.blur();
 }
-$('#msq').oninput=renderMd;$('#mdesc').oninput=updSum;$('#mx').onclick=()=>$('#mdlg').close();$('#addm').onclick=()=>openMeal(null);
+$('#msq').oninput=renderMd;$('#mdesc').oninput=updSum;$('#gal').onchange=async e=>{
+  const fs=[...e.target.files];e.target.value='';if(!fs.length)return;toast('讀取照片中…');
+  const L=[];for(const f of fs){let lm=f.lastModified?new Date(f.lastModified):new Date();if(ymd(lm)>today())lm=new Date();
+    L.push({img:await shrink(f),d:ymd(lm),t:lm.toTimeString().slice(0,5),note:'日期與時間已依照片檔案時間預填，請確認是否正確。'})}
+  L.sort((a,b)=>(a.d+a.t).localeCompare(b.d+b.t));mq=L;nextMeal();
+};
+var attT=null;
+const bindAtt=el=>el.querySelectorAll('[data-att]').forEach(b=>b.onclick=()=>{attT=b.dataset.att.split('|');$('#att').click()});
+$('#att').onchange=async e=>{
+  const f=e.target.files[0];e.target.value='';if(!f||!attT)return;const m=db.days[attT[0]]?.meals[+attT[1]];if(!m)return;
+  m.imgId='i'+Date.now().toString(36);await putImg(m.imgId,await shrink(f));save();render();toast('已補上照片');
+};
+$('#mx').onclick=()=>{$('#mdlg').close();nextMeal()};$('#mdlg').oncancel=()=>setTimeout(nextMeal);$('#addm').onclick=()=>openMeal(null);
 $('#mgo').onclick=async()=>{
   const desc=$('#mdesc').value.trim(),items=md.items.filter(i=>i.qty>0),img=md.img;
   if(!img&&!desc&&!items.length)return toast('請拍照、輸入說明或選擇食物');
-  const m={t:new Date().toTimeString().slice(0,5)};if(desc)m.desc=desc;
+  let dkey=$('#mdate').value||today();if(dkey>today())dkey=today();
+  const m={t:$('#mtime').value||nowT()};if(desc)m.desc=desc;
   if(items.length){m.items=items.map(({name,unit,qty,kcal,protein_g})=>({name,unit,qty,kcal,protein_g}));items.forEach(i=>{const f=db.foods.find(x=>x.id===i.id);if(f)f.used=(f.used||0)+1})}
   const tt=mdTot(),fromLib=()=>({name:items.map(i=>`${i.name}×${i.qty}`).join('、'),kcal:Math.round(tt.k),protein_g:Math.round(tt.p),note:'來自食物庫'});
   $('#mdlg').close();
   if(img){m.imgId='i'+Date.now().toString(36);await putImg(m.imgId,img)}
-  day(today()).meals.push(m);
-  if(!img&&!desc){m.ai=fromLib();save();render();return}
-  busy.add(m);save();render();toast('AI 分析中…');
+  day(dkey).meals.push(m);day(dkey).meals.sort((a,b)=>a.t.localeCompare(b.t));
+  if(!img&&!desc){m.ai=fromLib();save();render();toast(dkey===today()?'已加入':`已加入 ${dkey}`);return}
+  busy.add(m);save();render();toast(dkey===today()?'AI 分析中…':`已加入 ${dkey}，AI 分析中…`);nextMeal();
   try{
     const parts=[];if(img)parts.push({type:'image',source:{type:'base64',media_type:'image/jpeg',data:img.split(',')[1]}});
     parts.push({type:'text',text:(img?'請辨識這餐並估算份量與熱量。':'請根據以下說明估算這餐的份量與熱量。')
