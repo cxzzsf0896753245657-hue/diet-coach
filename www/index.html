@@ -41,6 +41,7 @@ details.card summary{padding:2px 0}details.card[open] summary{margin-bottom:8px}
 .snk{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--ln);border-radius:12px;margin:8px 0;cursor:pointer}.snk input{margin-top:4px}
 .dts{position:absolute;left:0;right:0;bottom:3px;display:flex;justify-content:center;gap:3px;pointer-events:none}.dts i{width:5px;height:5px;border-radius:50%;display:block}.dm{background:var(--ink)}.ds{background:var(--warn)}
 #mtp button.on{background:var(--ac);color:#fff}
+.kv{display:flex;justify-content:space-between;gap:10px;padding:4px 0;border-bottom:1px solid color-mix(in srgb,var(--ac) 18%,transparent);font-size:14px}.kv:first-of-type{margin-top:6px}
 img:not([src]){visibility:hidden}
 dialog{background:var(--card);color:var(--ink);border:1px solid var(--ln);border-radius:12px;max-width:90vw;max-height:80vh;overflow:auto}
 button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--warn);outline-offset:2px}
@@ -144,7 +145,7 @@ input,textarea,select{font:inherit;width:100%;padding:9px;border-radius:8px;bord
 <div class="row"><button id="bk">匯出備份</button><label class="btn alt">匯入還原<input id="bki" type="file" accept=".json,application/json" hidden></label></div>
 <p class="mut" id="bkl"></p></details>
 <button id="saveP" style="width:100%">儲存設定</button>
-<p class="mut" style="text-align:center;font-size:12px;margin-top:10px">版本 2026.10.05-a（目標自動調整）</p>
+<p class="mut" style="text-align:center;font-size:12px;margin-top:10px">版本 2026.10.06-b（營養計算重整）</p>
 </section>
 </main>
 <nav id="nav" aria-label="主選單"><button data-tab="today"><span class="ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7"/><path d="M6 10v9h12v-9"/><path d="M10 19v-5h4v5"/></svg></span><span>今天</span></button><button data-tab="trend"><span class="ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4v16h16"/><path d="M8 15l3.5-4 3 3L20 7"/></svg></span><span>趨勢</span></button><button data-tab="hist"><span class="ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2.5"/><path d="M4 10h16M9 3v4M15 3v4"/></svg></span><span>歷史</span></button><button data-tab="food"><span class="ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16a8 8 0 0 1-16 0z"/><path d="M9 8c0-1.6 1.2-1.6 1.2-3.2M14 8c0-1.6 1.2-1.6 1.2-3.2"/></svg></span><span>食物庫</span></button><button data-tab="set"><span class="ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/><circle cx="9" cy="7" r="2.2" fill="var(--card)"/><circle cx="15.5" cy="12" r="2.2" fill="var(--card)"/><circle cx="8" cy="17" r="2.2" fill="var(--card)"/></svg></span><span>設定</span></button></nav><dialog id="gdlg"><b>補登哪一天的照片？</b>
@@ -500,16 +501,31 @@ const nutTxt=a=>`｜蛋白質 ${a.protein_g||0}g`+(a.carb_g!=null?`｜碳水 ${a
 function targets(){
   const p=db.p,w=curWeight(),h=p.ht,age=ageNow(),male=p.sx==='m';let r={};
   if(w&&h&&age){
-    const bmr=10*w+6.25*h-5*age+(male?5:-161),tdee=bmr*(+p.act||1.375),losing=!p.wt||w>p.wt;let rate=+p.rate||.5;
-    if(p.rate==='auto'){const left=p.dt&&p.dt>today()?(new Date(p.dt)-Date.now())/864e5/7:0;rate=p.wt&&w>p.wt&&left>0?Math.min(1,Math.max(.1,(w-p.wt)/left)):.5}
-    const deficit=losing?rate*7700/7:0,raw=tdee-deficit,floor=male?1500:1200,adj=p.kadj||0,kcal=Math.round(Math.max(floor,raw+adj)/10)*10,ref=p.wt&&p.wt<w?p.wt:w;
-    const prot=Math.min(Math.round(1.6*ref),Math.round(.35*kcal/4)),fat=Math.round(.27*kcal/9);
-    r={kcal,p:prot,f:fat,c:Math.max(0,Math.round((kcal-prot*4-fat*9)/4)),fib:Math.round(14*kcal/1000),bmr:Math.round(bmr),tdee:Math.round(tdee),deficit:Math.round(deficit),floored:raw+adj<floor,adj,auto:true};
+    // 1) 基礎代謝 BMR：Mifflin-St Jeor；2) 每日總消耗 TDEE = BMR × 活動係數
+    const bmr=10*w+6.25*h-5*age+(male?5:-161),pal=+p.act||1.375,tdee=bmr*pal,losing=!p.wt||w>p.wt;
+    // 3) 想要的每日缺口：每週減重速度 × 7700 大卡/公斤 ÷ 7（安全上限 1000 大卡/天）
+    let rate=+p.rate||.5,autoNote='';
+    if(p.rate==='auto'){const left=p.dt&&p.dt>today()?(new Date(p.dt)-Date.now())/864e5/7:0;rate=p.wt&&w>p.wt&&left>0?(w-p.wt)/left:.5;
+      if(rate>1){autoNote=`依目標日期需要每週瘦 ${rate.toFixed(2)} 公斤，超過安全範圍，已限制在 1 公斤`;rate=1}else if(rate<.1)rate=.1}
+    const adjv=losing?p.kadj||0:0,want=losing?rate*7700/7-adjv:0,capped=want>1000,deficitWant=Math.min(want,1000);
+    // 4) 熱量下限：不低於基礎代謝，也不低於一般安全下限（女 1200／男 1500）
+    const floorK=Math.ceil(Math.max(bmr,male?1500:1200)/10)*10,raw=tdee-deficitWant,floored=raw<floorK;
+    const kcal=Math.max(floorK,Math.round(raw/10)*10),deficit=Math.max(0,Math.round(tdee-kcal));
+    // 5) 蛋白質：每公斤參考體重 1.6 克（目標體重較低時用目標體重），不超過熱量 35%，至少 0.8 克/公斤
+    const ref=p.wt&&p.wt<w?p.wt:w;let prot=Math.max(Math.round(.8*ref),Math.min(Math.round(1.6*ref),Math.round(.35*kcal/4),Math.round(2*w)));
+    // 6) 脂肪約 27% 熱量；7) 碳水取剩下的，至少 100 克（不夠時先降脂肪到 20%，再降蛋白質）
+    let fat=Math.round(.27*kcal/9),carb=(kcal-prot*4-fat*9)/4;
+    if(carb<100){fat=Math.round(.2*kcal/9);carb=(kcal-prot*4-fat*9)/4}
+    if(carb<100){prot=Math.max(Math.round(.8*ref),Math.floor((kcal-400-fat*9)/4));carb=(kcal-prot*4-fat*9)/4}
+    carb=Math.max(0,Math.round(carb));
+    r={kcal,p:prot,f:fat,c:carb,fib:Math.min(35,Math.max(25,Math.round(14*kcal/1000))),bmr:Math.round(bmr),tdee:Math.round(tdee),pal,deficit,floored,floorK,capped,autoNote,rateEff:deficit*7/7700,adj:losing?p.kadj||0:0,losing,
+       pct:{p:Math.round(prot*400/kcal),c:Math.round(carb*400/kcal),f:Math.round(fat*900/kcal)},auto:true};
   }
   const o=v=>+v>0?+v:null,m={kcal:o(p.tk),p:o(p.tp),c:o(p.tc),f:o(p.tf),fib:o(p.tb)};
   Object.keys(m).forEach(k=>{if(m[k]){r[k]=m[k];r.custom=true}});
   return r.kcal||r.p||r.c||r.f||r.fib?r:null;
 }
+function measuredTdee(){const v=[...Array(14)].map((_,i)=>db.days[ymd(new Date(Date.now()-i*864e5))]?.kcalOut).filter(x=>x>0);return v.length>=7?Math.round(avg(v)):null}
 function nutSum(days){
   const t={kcal:0,p:0,c:0,f:0,fib:0},miss={c:0,f:0},n={meals:0,days:0};
   days.forEach(d=>{let any=0;(d.meals||[]).forEach(m=>{const a=m.ai;if(!a)return;any=1;n.meals++;t.kcal+=a.kcal||0;t.p+=a.protein_g||0;t.fib+=a.fiber_g||0;
@@ -523,14 +539,14 @@ function nutBars(t,tg){
 }
 function nutLine(d){const{t,n}=nutSum([d]);if(!n.meals)return'';return`<div class="hx"><span>攝取 <b>${Math.round(t.kcal)} 大卡</b></span><span>蛋白質 <b>${Math.round(t.p)}g</b></span><span>碳水 <b>${Math.round(t.c)}g</b></span><span>脂肪 <b>${Math.round(t.f)}g</b></span><span>纖維 <b>${Math.round(t.fib)}g</b></span></div>`}
 function nutDig(d){const{t,n}=nutSum([d]);return n.meals?`（蛋白質${Math.round(t.p)}g/碳水${Math.round(t.c)}g/脂肪${Math.round(t.f)}g/纖維${Math.round(t.fib)}g）`:''}
-function tgLine(){const t=targets();return t&&t.kcal?`\n每日營養目標：熱量${t.kcal}kcal、蛋白質${t.p??'-'}g、碳水${t.c??'-'}g、脂肪${t.f??'-'}g、纖維${t.fib??'-'}g。`:''}
+function tgLine(){const t=targets();return t&&t.kcal?`\n${t.bmr?`基礎代謝${t.bmr}kcal、每日總消耗${t.tdee}kcal。`:''}每日營養目標：熱量${t.kcal}kcal、蛋白質${t.p??'-'}g、碳水${t.c??'-'}g、脂肪${t.f??'-'}g、纖維${t.fib??'-'}g。`:''}
 const NEEDSET='<p class="mut" style="margin:0">到「設定 → 每日營養目標」填入性別、年齡、活動量（身高、體重也要有），就能算出你每天需要的熱量與營養。</p><button class="alt sm" id="gonut" style="margin-top:8px">前往設定</button>';
 function renderNut(){
   const tg=targets(),{t,miss}=nutSum([day(today())]);let h;
   if(!tg||!tg.kcal)h=NEEDSET;
   else{const left=tg.kcal-Math.round(t.kcal);
     h=`<div class="bigrow"><div><span class="mut">今天已吃</span><br><span class="pu"><b class="bn">${Math.round(t.kcal)}</b> 大卡</span></div><div style="text-align:right"><span class="mut">${left>=0?'還可以吃':'已超過'}</span><br><span class="pu"><b class="bn">${Math.abs(left)}</b> 大卡</span></div></div>`
-     +nutBars(t,tg)+(miss.c||miss.f?`<p class="mut" style="font-size:13px;margin:6px 0 0">有 ${Math.max(miss.c,miss.f)} 筆餐點沒有碳水或脂肪資料，這兩項可能偏低。</p>`:'')}
+     +nutBars(t,tg)+(tg.auto?`<p class="mut" style="font-size:13px;margin:6px 0 0">目標依你的基礎代謝 ${tg.bmr}、每日總消耗 ${tg.tdee} 大卡計算</p>`:'')+(miss.c||miss.f?`<p class="mut" style="font-size:13px;margin:6px 0 0">有 ${Math.max(miss.c,miss.f)} 筆餐點沒有碳水或脂肪資料，這兩項可能偏低。</p>`:'')}
   $('#nut').innerHTML=h;const b=$('#gonut');if(b)b.onclick=()=>{showTab('set');$('#nutgrp').open=true};
   // 近 7 天平均
   const ds=[...Array(7)].map((_,i)=>db.days[ymd(new Date(Date.now()-i*864e5))]||{meals:[]}),s7=nutSum(ds),nd=s7.n.days;
@@ -539,7 +555,23 @@ function renderNut(){
   else{const av={};Object.keys(s7.t).forEach(k=>av[k]=s7.t[k]/nd);$('#nut7').innerHTML=`<p class="mut" style="margin:0 0 4px;font-size:13px">近 7 天有 ${nd} 天有紀錄，下面是這些天的平均值：</p>`+nutBars(av,tg)}
   const b2=$('#gonut2');if(b2)b2.onclick=()=>{showTab('set');$('#nutgrp').open=true};
   // 設定頁的建議說明
-  {const a=ageNow();$('#tsug').innerHTML=tg&&tg.auto?`<b>建議每天吃 ${tg.kcal} 大卡</b>${tg.floored?'（已到最低安全下限）':''}<br>蛋白質 ${tg.p}g・碳水 ${tg.c}g・脂肪 ${tg.f}g・纖維 ${tg.fib}g<div class="mut" style="font-size:13px;margin-top:6px">計算依據：體重 ${curWeight()}kg（最近 7 天平均）、身高 ${db.p.ht}cm、${a} 歲。基礎代謝約 ${tg.bmr}、每天總消耗約 ${tg.tdee} 大卡${tg.deficit?`，每天少吃約 ${tg.deficit} 大卡`:'，目前以維持體重為主'}${tg.adj?`，另外已微調 ${tg.adj} 大卡`:''}。${tg.custom?'下方有自訂的項目，會優先使用自訂值。':''}</div>`:(tg?'目前使用你自訂的目標。':'還缺資料：需要身高、生日（或年齡）、體重。');
+  {const a=ageNow(),md_=measuredTdee(),kv=(l,v)=>`<div class="kv"><span>${l}</span><b>${v}</b></div>`;let h;
+  if(tg&&tg.auto){
+    h=`<b>每天建議吃 ${tg.kcal} 大卡</b>`+kv(`基礎代謝 BMR`,`${tg.bmr} 大卡`)+kv(`每日總消耗 TDEE（BMR × ${tg.pal}）`,`${tg.tdee} 大卡`)
+      +kv('每日熱量缺口',tg.losing?`${tg.deficit} 大卡`:'0（維持體重）')+kv('預估每週變化',tg.losing?`約 -${tg.rateEff.toFixed(2)} 公斤`:'維持')
+      +`<div style="margin-top:8px">蛋白質 ${tg.p}g（${tg.pct.p}%）・碳水 ${tg.c}g（${tg.pct.c}%）・脂肪 ${tg.f}g（${tg.pct.f}%）・纖維 ${tg.fib}g</div>`;
+    const n=[];
+    n.push(`計算依據：體重 ${curWeight()}kg（最近 7 天平均）、身高 ${db.p.ht}cm、${a} 歲、${db.p.sx==='m'?'男':'女'}；BMR 用 Mifflin-St Jeor 公式。`);
+    if(tg.floored)n.push(`<b>為了不低於基礎代謝（${tg.floorK} 大卡），每天熱量以此為下限</b>，所以實際減重速度比你選的慢。想瘦得快一點，可以提高活動量。`);
+    if(tg.capped)n.push('你選的速度超過每天 1000 大卡缺口的安全上限，已自動限制。');
+    if(tg.autoNote)n.push(tg.autoNote+'。');
+    if(tg.adj)n.push(`另外已微調 ${tg.adj} 大卡。`);
+    if(tg.custom)n.push('下方有自訂的項目，會優先使用自訂值。');
+    if(tg.kcal<tg.bmr)n.push('<b>注意：目前的熱量目標低於你的基礎代謝，不建議長期這樣吃。</b>');
+    if(md_)n.push(`手錶／Health Connect 實測近 14 天平均每天消耗約 ${md_} 大卡（含基礎代謝，僅供參考，穿戴裝置的誤差可能不小）。`);
+    h+=`<div class="mut" style="font-size:13px;margin-top:8px">${n.join('<br>')}</div>`;
+  }else h=tg?'目前使用你自訂的目標。':'還缺資料：需要身高、生日（或年齡）、體重。';
+  $('#tsug').innerHTML=h;
   $('#agetxt').textContent=db.p.bd?(a?`目前 ${a} 歲，之後會自動更新`:'生日不正確'):(db.p.ag?`尚未填生日，暫時使用年齡 ${db.p.ag} 歲`:'');$('#kreset').hidden=!db.p.kadj;renderTip();renderAct()}
 }
 function ageNow(){const p=db.p;if(p.bd){const b=new Date(p.bd+'T00:00'),n=new Date();let a=n.getFullYear()-b.getFullYear();const m=n.getMonth()-b.getMonth();if(m<0||(m===0&&n.getDate()<b.getDate()))a--;return a>0&&a<120?a:null}return p.ag||null}
@@ -563,9 +595,9 @@ function plateau(){
 }
 function renderTip(){
   const el=$('#tip'),r=plateau();if(!r){el.hidden=true;return}
-  const fl=db.p.sx==='m'?1500:1200;let h=`<b>體重進度提醒</b><p style="margin:6px 0">最近 3 週平均每週體重只變化 ${Math.max(0,r.actual).toFixed(2)} 公斤，低於預期的 ${r.planned.toFixed(2)} 公斤。</p>`,btn;
+  let h=`<b>體重進度提醒</b><p style="margin:6px 0">最近 3 週平均每週體重只變化 ${Math.max(0,r.actual).toFixed(2)} 公斤，低於預期的 ${r.planned.toFixed(2)} 公斤。</p>`,btn;
   if(r.logged<10){h+=`<p style="margin:6px 0">這 3 週只有 ${r.logged} 天有記錄飲食，資料不夠完整，建議先每天都記錄，再判斷要不要調整。</p>`;btn='<button class="alt sm" id="tipno">知道了，2 週後再提醒</button>'}
-  else if(r.tg.floored||r.tg.kcal-100<fl){h+='<p style="margin:6px 0">每天熱量已接近最低安全下限，不建議再減少飲食。可以試著增加活動量，或和醫師、營養師討論。</p>';btn='<button class="alt sm" id="tipno">知道了，2 週後再提醒</button>'}
+  else if(r.tg.floored||r.tg.kcal-100<r.tg.floorK){h+='<p style="margin:6px 0">每天熱量已接近基礎代謝，不建議再減少飲食。可以試著增加活動量，或和醫師、營養師討論。</p>';btn='<button class="alt sm" id="tipno">知道了，2 週後再提醒</button>'}
   else{h+='<p style="margin:6px 0">你有好好記錄，但體重沒有照預期下降。可以考慮把每天熱量再降 100 大卡，或增加活動量。</p>';btn='<button class="sm" id="tipok">每天少吃 100 大卡</button><button class="alt sm" id="tipno">先不用，2 週後再提醒</button>'}
   el.innerHTML=h+`<div class="row">${btn}</div>`;el.hidden=false;
   const n=$('#tipno');if(n)n.onclick=()=>{db.p.snz=ymd(new Date(Date.now()+14*864e5));save();render()};
